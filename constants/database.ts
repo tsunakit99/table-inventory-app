@@ -6,11 +6,11 @@ export const CHECK_STATUS: Record<CheckStatus, { label: string; color: string }>
     color: 'text-gray-600'
   },
   YELLOW: {
-    label: 'ちょっとやばいかも',
+    label: '警告',
     color: 'text-yellow-600'
   },
   RED: {
-    label: 'マジでやばい',
+    label: '危険',
     color: 'text-red-600'
   }
 } as const
