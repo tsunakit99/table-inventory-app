@@ -3,11 +3,11 @@
 import { useState, useMemo, useCallback, Suspense } from 'react'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { InventoryContent } from './InventoryContent'
-import { FilteredProductsResult } from '@/actions/search'
-import { NotificationSummary } from '@/actions/notifications'
+import { FilteredProductsResult } from '@/types/search'
+import { NotificationSummary } from '@/types/notifications'
 import { CheckStatus } from '@/types/database'
-import { Category } from '@/components/features/categories/CategoryTabs'
-import { CheckHistoryItem } from '@/components/features/history/NotificationModal'
+import { Category } from '@/types/categories'
+import { CheckHistoryItem } from '@/types/history'
 
 interface InventoryDataProviderProps {
   initialCategories: Category[]
