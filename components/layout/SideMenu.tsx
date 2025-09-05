@@ -5,6 +5,7 @@ import { Settings, LogOut, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
+import { getInitials } from '@/lib/utils/user'
 import { signOut } from '@/actions/auth'
 import { useRouter } from 'next/navigation'
 
@@ -21,14 +22,6 @@ export const SideMenu = memo(function SideMenu({
   userName = "ユーザー",
   userAvatarUrl = null
 }: SideMenuProps) {
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
   const router = useRouter()
   
   const handleBackdropClick = useCallback(() => {

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { updateDisplayName, updateAvatar } from '@/actions/auth'
 import { uploadAvatar } from '@/actions/storage'
+import { getInitials } from '@/lib/utils/user'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -67,14 +68,6 @@ export function UserProfile({ user }: UserProfileProps) {
     })
   }
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
 
   return (
     <div className="container max-w-2xl mx-auto py-6 px-4">
@@ -129,7 +122,7 @@ export function UserProfile({ user }: UserProfileProps) {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">
-                  JPEGまたはPNG形式、最大5MB
+                  JPEGまたはPNG形式、最大1MB
                 </p>
               </div>
             </div>
