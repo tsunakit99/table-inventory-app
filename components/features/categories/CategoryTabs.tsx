@@ -1,10 +1,16 @@
 'use client'
 
-import { Plus } from 'lucide-react'
+import { useState, useCallback, memo } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import { memo } from 'react'
 import { Category } from '@/types/categories'
 
 export type { Category }
@@ -14,23 +20,109 @@ interface CategoryTabsProps {
   selectedCategoryId?: string
   onCategoryChange?: (categoryId: string) => void
   onAddCategory?: () => void
+  onDeleteCategory?: (categoryId: string) => void
   className?: string
 }
 
 const CategoryButton = memo(function CategoryButton({ 
   category, 
   isSelected, 
-  onClick 
+  onClick,
+  onDelete
 }: { 
   category: Category | 'all', 
   isSelected: boolean, 
-  onClick: () => void 
+  onClick: () => void,
+  onDelete?: (categoryId: string) => void
 }) {
+  const [isLongPressActive, setIsLongPressActive] = useState(false)
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null)
+
+  const handleMouseDown = useCallback(() => {
+    if (category === 'all' || !onDelete) return
+    
+    const timer = setTimeout(() => {
+      setIsLongPressActive(true)
+    }, 800)
+    setLongPressTimer(timer)
+  }, [category, onDelete])
+
+  const handleMouseUp = useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer)
+      setLongPressTimer(null)
+    }
+    setIsLongPressActive(false)
+  }, [longPressTimer])
+
+  const handleTouchStart = useCallback(() => {
+    if (category === 'all' || !onDelete) return
+    
+    const timer = setTimeout(() => {
+      setIsLongPressActive(true)
+    }, 800)
+    setLongPressTimer(timer)
+  }, [category, onDelete])
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer)
+      setLongPressTimer(null)
+    }
+    if (isLongPressActive) {
+      e.preventDefault()
+    }
+    setIsLongPressActive(false)
+  }, [longPressTimer, isLongPressActive])
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    if (category === 'all' || !onDelete) return
+    e.preventDefault()
+    setIsLongPressActive(true)
+  }, [category, onDelete])
+
+  const handleDeleteClick = useCallback(() => {
+    if (category !== 'all' && onDelete) {
+      onDelete(category.id)
+    }
+  }, [category, onDelete])
+
+  if (category !== 'all' && onDelete && isLongPressActive) {
+    return (
+      <DropdownMenu open={isLongPressActive} onOpenChange={setIsLongPressActive}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant={isSelected ? "default" : "secondary"}
+            size="sm"
+            className={cn(
+              "rounded-full whitespace-nowrap",
+              isSelected ? "bg-[#0C1E7D] text-white hover:opacity-80" : ""
+            )}
+          >
+            {category.name}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center">
+          <DropdownMenuItem onClick={handleDeleteClick} className="text-red-600 hover:text-red-700">
+            <Trash2 className="h-4 w-4 mr-2" />
+            カテゴリを削除
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
   return (
     <Button
       variant={isSelected ? "default" : "secondary"}
       size="sm"
       onClick={onClick}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onContextMenu={handleContextMenu}
       className={cn(
         "rounded-full whitespace-nowrap",
         isSelected ? "bg-[#0C1E7D] text-white hover:opacity-80" : ""
@@ -46,6 +138,7 @@ export const CategoryTabs = memo(function CategoryTabs({
   selectedCategoryId,
   onCategoryChange,
   onAddCategory,
+  onDeleteCategory,
   className
 }: CategoryTabsProps) {
 
@@ -67,6 +160,7 @@ export const CategoryTabs = memo(function CategoryTabs({
               category={category}
               isSelected={selectedCategoryId === category.id}
               onClick={() => onCategoryChange?.(category.id)}
+              onDelete={onDeleteCategory}
             />
           ))}
 
