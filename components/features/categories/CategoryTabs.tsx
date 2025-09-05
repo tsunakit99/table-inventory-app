@@ -5,11 +5,9 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { memo } from 'react'
+import { Category } from '@/types/categories'
 
-export interface Category {
-  id: string
-  name: string
-}
+export type { Category }
 
 interface CategoryTabsProps {
   categories: Category[]

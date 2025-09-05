@@ -9,16 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
-
-export interface CheckHistoryItem {
-  id: string
-  productName: string
-  status: 'YELLOW' | 'RED' | 'NONE'
-  checkedAt: Date
-  quantity?: number
-  note?: string
-  userName?: string
-}
+import { CheckHistoryItem } from '@/types/history'
 
 interface NotificationModalProps {
   isOpen: boolean
