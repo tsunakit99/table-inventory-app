@@ -1,16 +1,20 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { Category } from '@/types/categories'
+import { Category, CategoryInsert } from '@/types/categories'
 import { revalidatePath } from 'next/cache'
 
 export async function addCategory(categoryName: string): Promise<Category> {
   const supabase = await createClient()
 
+  const insertData: CategoryInsert = {
+    name: categoryName
+  }
+
   const { data, error } = await supabase
     .from('categories')
     // @ts-expect-error: Supabase type inference issue
-    .insert({ name: categoryName })
+    .insert(insertData)
     .select()
     .single()
 
