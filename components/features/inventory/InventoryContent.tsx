@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useState, useCallback, useMemo } from 'react'
+import { memo, useState, useCallback, useMemo, useEffect } from 'react'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { SideMenu } from '@/components/layout/SideMenu'
 import { SearchBar } from '@/components/forms/SearchBar'
@@ -17,8 +17,10 @@ import { CheckHistoryItem } from '@/types/history'
 import { updateProductCheck } from '@/actions/inventory'
 import { addCategory } from '@/actions/categories'
 import { addProduct, deleteProduct } from '@/actions/products'
+import { getUser } from '@/actions/auth'
 import { CheckStatus } from '@/types/database'
 import { Plus } from 'lucide-react'
+import type { User } from '@supabase/supabase-js'
 
 interface Data {
   products: { products: Product[]; totalCount: number }
@@ -55,6 +57,22 @@ export const InventoryContent = memo(function InventoryContent({
   const { products } = data.products
   const notifications = data.notifications
   const checkHistory = data.checkHistory
+  
+  // ユーザー情報状態
+  const [user, setUser] = useState<User | null>(null)
+  
+  // ユーザー情報を取得
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await getUser()
+        setUser(userData)
+      } catch (error) {
+        console.error('Failed to fetch user:', error)
+      }
+    }
+    fetchUser()
+  }, [])
 
   // UI状態管理
   const [isCheckModalOpen, setIsCheckModalOpen] = useState(false)
@@ -72,7 +90,7 @@ export const InventoryContent = memo(function InventoryContent({
   }, [])
 
   // サイドメニュー開閉
-  const handleUserIconClick = useCallback(() => {
+  const handleMenuClick = useCallback(() => {
     setIsSideMenuOpen(true)
   }, [])
 
@@ -174,7 +192,7 @@ export const InventoryContent = memo(function InventoryContent({
         hasNewNotifications={notifications.hasNewNotifications}
         notificationCount={notifications.notificationCount}
         onNotificationClick={handleNotificationClick}
-        onUserIconClick={handleUserIconClick}
+        onMenuClick={handleMenuClick}
       />
 
       <div className="space-y-6">
@@ -222,7 +240,8 @@ export const InventoryContent = memo(function InventoryContent({
       <SideMenu
         isOpen={isSideMenuOpen}
         onClose={handleSideMenuClose}
-        userName="ユーザー"
+        userName={user?.user_metadata?.display_name || 'unknown'}
+        userAvatarUrl={user?.user_metadata?.avatar_url || null}
       />
 
       {/* Modals */}
