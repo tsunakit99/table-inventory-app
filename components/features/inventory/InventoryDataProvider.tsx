@@ -1,13 +1,16 @@
 'use client'
 
-import { useState, useMemo, useCallback, Suspense } from 'react'
+import { useState, useMemo, useCallback, Suspense, useTransition } from 'react'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { InventoryContent } from './InventoryContent'
-import { FilteredProductsResult } from '@/actions/search'
-import { NotificationSummary } from '@/actions/notifications'
+import { FilteredProductsResult } from '@/types/search'
+import { NotificationSummary } from '@/types/notifications'
 import { CheckStatus } from '@/types/database'
-import { Category } from '@/components/features/categories/CategoryTabs'
-import { CheckHistoryItem } from '@/components/features/history/NotificationModal'
+import { Category } from '@/types/categories'
+import { CheckHistoryItem } from '@/types/history'
+import { getFilteredProducts } from '@/actions/search'
+import { getNotificationSummary } from '@/actions/notifications'
+import { getCheckHistory } from '@/actions/history'
 
 interface InventoryDataProviderProps {
   initialCategories: Category[]
@@ -27,12 +30,30 @@ export function InventoryDataProvider({
   const [statusFilters, setStatusFilters] = useState<CheckStatus[]>([])
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   
-  // 初期データから状態を管理
-  const [currentData] = useState({
+  // データ状態管理
+  const [currentData, setCurrentData] = useState({
     products: initialProducts,
     notifications: initialNotifications,
     checkHistory: initialCheckHistory
   })
+  const [isPending, startTransition] = useTransition()
+
+  // データ再取得関数
+  const refreshData = useCallback(async () => {
+    startTransition(async () => {
+      const [products, notifications, checkHistory] = await Promise.all([
+        getFilteredProducts({ query: '', categoryId: 'all', statusFilters: [] }),
+        getNotificationSummary(),
+        getCheckHistory()
+      ])
+      
+      setCurrentData({
+        products,
+        notifications,
+        checkHistory
+      })
+    })
+  }, [])
 
   // コールバックを安定化
   const handleSearchQuery = useCallback((query: string) => {
@@ -97,6 +118,8 @@ export function InventoryDataProvider({
           onStatusFilters={handleStatusFilters}
           categories={categories}
           onCategories={handleCategories}
+          onRefreshData={refreshData}
+          isPending={isPending}
         />
       </Suspense>
     </ErrorBoundary>

@@ -4,13 +4,16 @@ import { memo, useState, useCallback, useMemo } from 'react'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { SideMenu } from '@/components/layout/SideMenu'
 import { SearchBar } from '@/components/forms/SearchBar'
-import { CategoryTabs, Category } from '@/components/features/categories/CategoryTabs'
-import { ProductList, Product } from '@/components/features/products/ProductList'
+import { CategoryTabs } from '@/components/features/categories/CategoryTabs'
+import { ProductList } from '@/components/features/products/ProductList'
+import { Category } from '@/types/categories'
+import { Product } from '@/types/products'
 import { CheckModal } from '@/components/forms/CheckModal'
 import { AddCategoryModal } from '@/components/features/categories/AddCategoryModal'
 import { AddProductModal } from '@/components/features/products/AddProductModal'
 import { DeleteConfirmModal } from '@/components/forms/DeleteConfirmModal'
-import { NotificationModal, CheckHistoryItem } from '@/components/features/history/NotificationModal'
+import { NotificationModal } from '@/components/features/history/NotificationModal'
+import { CheckHistoryItem } from '@/types/history'
 import { updateProductCheck } from '@/actions/inventory'
 import { addCategory } from '@/actions/categories'
 import { addProduct, deleteProduct } from '@/actions/products'
@@ -33,6 +36,8 @@ interface InventoryContentProps {
   onStatusFilters: (filters: CheckStatus[]) => void
   categories: Category[]
   onCategories: (categories: Category[]) => void
+  onRefreshData: () => Promise<void>
+  isPending: boolean
 }
 
 export const InventoryContent = memo(function InventoryContent({
@@ -42,7 +47,9 @@ export const InventoryContent = memo(function InventoryContent({
   onSelectedCategoryId,
   onStatusFilters,
   categories,
-  onCategories
+  onCategories,
+  onRefreshData,
+  isPending
 }: Omit<InventoryContentProps, 'searchQuery' | 'statusFilters'>) {
   // データを直接使用
   const { products } = data.products
@@ -126,9 +133,9 @@ export const InventoryContent = memo(function InventoryContent({
       await updateProductCheck(selectedProduct.id, selectedProduct.name, data)
       setIsCheckModalOpen(false)
       setSelectedProduct(null)
-      // TODO: データの再取得が必要
+      await onRefreshData()
     }
-  }, [selectedProduct])
+  }, [selectedProduct, onRefreshData])
 
   // カテゴリ追加
   const handleAddCategory = useCallback(async (categoryName: string) => {
@@ -139,8 +146,8 @@ export const InventoryContent = memo(function InventoryContent({
   // 商品追加
   const handleAddProduct = useCallback(async (productData: { name: string; categoryId: string }) => {
     await addProduct(productData)
-    // TODO: データの再取得が必要
-  }, [])
+    await onRefreshData()
+  }, [onRefreshData])
 
   // 商品削除
   const handleDeleteClick = useCallback((productId: string) => {
@@ -154,9 +161,11 @@ export const InventoryContent = memo(function InventoryContent({
   const handleDeleteConfirm = useCallback(async () => {
     if (productToDelete) {
       await deleteProduct(productToDelete.id)
-      // TODO: データの再取得が必要
+      setIsDeleteModalOpen(false)
+      setProductToDelete(null)
+      await onRefreshData()
     }
-  }, [productToDelete])
+  }, [productToDelete, onRefreshData])
 
   return (
     <div className="min-h-screen bg-background">
@@ -189,11 +198,13 @@ export const InventoryContent = memo(function InventoryContent({
         </div>
         
         {/* 商品リスト */}
-        <ProductList
-          products={products}
-          onCheckClick={handleCheckClick}
-          onDeleteClick={handleDeleteClick}
-        />
+        <div className={isPending ? 'opacity-50 pointer-events-none' : ''}>
+          <ProductList
+            products={products}
+            onCheckClick={handleCheckClick}
+            onDeleteClick={handleDeleteClick}
+          />
+        </div>
       </div>
 
       {/* フローティング商品追加ボタン */}

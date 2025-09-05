@@ -1,30 +1,38 @@
 'use server'
 
-import { CheckHistoryItem } from '@/components/features/history/NotificationModal'
+import { createClient } from '@/lib/supabase/server'
+import { CheckHistoryItem, CheckHistoryWithRelations } from '@/types/history'
 
 export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
-  // TODO: 実際のAPI呼び出しに置き換える
-  // 現在はmockDataを使用
-  const { mockCheckHistory } = await import('@/data/mockData')
-  return mockCheckHistory
-}
+  const supabase = await createClient()
 
-export async function addCheckHistoryItem(
-  productName: string,
-  status: 'YELLOW' | 'RED' | 'NONE',
-  quantity?: number,
-  note?: string
-): Promise<CheckHistoryItem> {
-  // TODO: 実際のAPI呼び出しに置き換える
-  const newHistoryItem: CheckHistoryItem = {
-    id: Date.now().toString(),
-    productName,
-    status,
-    checkedAt: new Date(),
-    quantity,
-    note
+  const { data, error } = await supabase
+    .from('check_history')
+    .select(`
+      *,
+      product:products(
+        *,
+        category:categories(*)
+      )
+    `)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (error) {
+    console.error('Check history fetch error:', error)
+    throw new Error('チェック履歴の取得に失敗しました')
   }
-  
-  console.log('チェック履歴追加:', newHistoryItem)
-  return newHistoryItem
+
+  // データ変換
+  const checkHistory: CheckHistoryItem[] = ((data || []) as CheckHistoryWithRelations[]).map((item: CheckHistoryWithRelations) => ({
+    id: item.id,
+    productName: item.product.name,
+    status: item.action_type === 'CHECK_YELLOW' ? 'YELLOW' : 
+            item.action_type === 'CHECK_RED' ? 'RED' : 'NONE',
+    checkedAt: new Date(item.created_at),
+    quantity: item.quantity || undefined,
+    note: item.note || undefined
+  }))
+
+  return checkHistory
 }

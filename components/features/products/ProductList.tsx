@@ -2,16 +2,12 @@
 
 import { AlertTriangle, AlertCircle, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { CheckStatus } from '@/types/database'
 import { useState, memo, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
+import { Product } from '@/types/products'
+import { CheckStatus } from '@/types/database'
 
-export interface Product {
-  id: string
-  name: string
-  check_status: CheckStatus
-  category_id: string
-}
+export type { Product }
 
 interface ProductItemProps {
   product: Product

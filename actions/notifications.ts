@@ -1,23 +1,29 @@
 'use server'
 
-import { mockCheckHistory } from '@/data/mockData'
-
-export interface NotificationSummary {
-  hasNewNotifications: boolean
-  notificationCount: number
-  redCount: number
-  yellowCount: number
-}
+import { createClient } from '@/lib/supabase/server'
+import { NotificationSummary } from '@/types/notifications'
 
 export async function getNotificationSummary(): Promise<NotificationSummary> {
-  // TODO: 実際のAPI呼び出しに置き換える
-  const redItems = mockCheckHistory.filter(item => item.status === 'RED')
-  const yellowItems = mockCheckHistory.filter(item => item.status === 'YELLOW')
-  
+  const supabase = await createClient()
+
+  // 24時間以内のチェック履歴を取得して通知数を計算
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+
+  const { data, error } = await supabase
+    .from('check_history')
+    .select('id')
+    .gte('created_at', twentyFourHoursAgo)
+
+  if (error) {
+    console.error('Notifications fetch error:', error)
+    throw new Error('通知の取得に失敗しました')
+  }
+
+  const notificationCount = data?.length || 0
+  const hasNewNotifications = notificationCount > 0
+
   return {
-    hasNewNotifications: redItems.length > 0,
-    notificationCount: redItems.length,
-    redCount: redItems.length,
-    yellowCount: yellowItems.length
+    hasNewNotifications,
+    notificationCount
   }
 }

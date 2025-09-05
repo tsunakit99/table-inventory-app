@@ -1,20 +1,44 @@
 'use server'
 
-import { Category } from '@/components/features/categories/CategoryTabs'
+import { createClient } from '@/lib/supabase/server'
+import { Category, CategoryInsert } from '@/types/categories'
+import { revalidatePath } from 'next/cache'
 
 export async function addCategory(categoryName: string): Promise<Category> {
-  // TODO: 実際のAPI呼び出しに置き換える
-  const newCategory: Category = {
-    id: Date.now().toString(), // 仮のID生成
+  const supabase = await createClient()
+
+  const insertData: CategoryInsert = {
     name: categoryName
   }
-  
-  console.log('カテゴリ追加:', newCategory)
-  return newCategory
+
+  const { data, error } = await supabase
+    .from('categories')
+    // @ts-expect-error: Supabase type inference issue
+    .insert(insertData)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Category creation error:', error)
+    throw new Error('カテゴリの作成に失敗しました')
+  }
+
+  revalidatePath('/')
+  return data
 }
 
 export async function getCategories(): Promise<Category[]> {
-  // TODO: 実際のAPI呼び出しに置き換える
-  // 現在はmockDataを使用
-  return []
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .order('name')
+
+  if (error) {
+    console.error('Categories fetch error:', error)
+    throw new Error('カテゴリの取得に失敗しました')
+  }
+
+  return data || []
 }

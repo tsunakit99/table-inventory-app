@@ -1,44 +1,40 @@
 'use server'
 
-import { CheckStatus } from '@/types/database'
-import { mockProducts } from '@/data/mockData'
-
-export interface SearchFilters {
-  query: string
-  categoryId: string
-  statusFilters: CheckStatus[]
-}
-
-export interface FilteredProductsResult {
-  products: typeof mockProducts
-  totalCount: number
-}
+import { createClient } from '@/lib/supabase/server'
+import { SearchFilters, FilteredProductsResult } from '@/types/search'
 
 export async function getFilteredProducts(filters: SearchFilters): Promise<FilteredProductsResult> {
-  // TODO: 実際のAPI呼び出しに置き換える
-  let filtered = mockProducts
+  const supabase = await createClient()
+
+  let supabaseQuery = supabase
+    .from('products')
+    .select('*', { count: 'exact' })
+    .order('name')
 
   // カテゴリフィルター
   if (filters.categoryId !== 'all') {
-    filtered = filtered.filter(product => product.category_id === filters.categoryId)
+    supabaseQuery = supabaseQuery.eq('category_id', filters.categoryId)
   }
 
   // 検索フィルター
   if (filters.query) {
-    filtered = filtered.filter(product => 
-      product.name.toLowerCase().includes(filters.query.toLowerCase())
-    )
+    supabaseQuery = supabaseQuery.ilike('name', `%${filters.query}%`)
   }
 
   // ステータスフィルター
   if (filters.statusFilters.length > 0) {
-    filtered = filtered.filter(product => 
-      filters.statusFilters.includes(product.check_status)
-    )
+    supabaseQuery = supabaseQuery.in('check_status', filters.statusFilters)
+  }
+
+  const { data, error, count } = await supabaseQuery
+
+  if (error) {
+    console.error('Products search error:', error)
+    throw new Error('商品の検索に失敗しました')
   }
 
   return {
-    products: filtered,
-    totalCount: filtered.length
+    products: data || [],
+    totalCount: count || 0
   }
 }

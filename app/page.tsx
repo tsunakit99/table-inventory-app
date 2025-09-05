@@ -2,12 +2,13 @@ import InventoryHome from '@/components/InventoryHome'
 import { getFilteredProducts } from '@/actions/search'
 import { getNotificationSummary } from '@/actions/notifications'
 import { getCheckHistory } from '@/actions/history'
-import { mockCategories } from '@/data/mockData'
+import { getCategories } from '@/actions/categories'
 
 // Server Component でデータを取得
 export default async function Home() {
   // 初期データを並行取得
-  const [initialProducts, initialNotifications, initialCheckHistory] = await Promise.all([
+  const [initialCategories, initialProducts, initialNotifications, initialCheckHistory] = await Promise.all([
+    getCategories(),
     getFilteredProducts({ query: '', categoryId: 'all', statusFilters: [] }),
     getNotificationSummary(),
     getCheckHistory()
@@ -15,7 +16,7 @@ export default async function Home() {
 
   return (
     <InventoryHome 
-      initialCategories={mockCategories}
+      initialCategories={initialCategories}
       initialProducts={initialProducts}
       initialNotifications={initialNotifications}
       initialCheckHistory={initialCheckHistory}
