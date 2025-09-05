@@ -1,6 +1,6 @@
-import { Category } from '@/components/features/categories/CategoryTabs'
-import { Product } from '@/components/features/products/ProductList'
-import { CheckHistoryItem } from '@/components/features/history/NotificationModal'
+import { Category } from '@/types/categories'
+import { Product } from '@/types/products'
+import { CheckHistoryItem } from '@/types/history'
 
 export const mockCategories: Category[] = [
   { id: '1', name: 'ビール' },
@@ -11,14 +11,14 @@ export const mockCategories: Category[] = [
 ]
 
 export const mockProducts: Product[] = [
-  { id: '1', name: 'サッポロ黒ラベル', check_status: 'NONE', category_id: '1' },
-  { id: '2', name: 'アサヒスーパードライ', check_status: 'YELLOW', category_id: '1' },
-  { id: '3', name: 'キリン一番搾り', check_status: 'RED', category_id: '1' },
-  { id: '4', name: '獺祭 純米大吟醸', check_status: 'NONE', category_id: '2' },
-  { id: '5', name: '久保田 千寿', check_status: 'YELLOW', category_id: '2' },
-  { id: '6', name: '赤霧島', check_status: 'NONE', category_id: '2' },
-  { id: '7', name: 'シャトー・マルゴー', check_status: 'NONE', category_id: '3' },
-  { id: '8', name: 'ドンペリニヨン', check_status: 'RED', category_id: '3' },
+  { id: '1', name: 'サッポロ黒ラベル', check_status: 'NONE', category_id: '1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: '2', name: 'アサヒスーパードライ', check_status: 'YELLOW', category_id: '1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: '3', name: 'キリン一番搾り', check_status: 'RED', category_id: '1', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: '4', name: '獺祭 純米大吟醸', check_status: 'NONE', category_id: '2', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: '5', name: '久保田 千寿', check_status: 'YELLOW', category_id: '2', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: '6', name: '赤霧島', check_status: 'NONE', category_id: '2', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: '7', name: 'シャトー・マルゴー', check_status: 'NONE', category_id: '3', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
+  { id: '8', name: 'ドンペリニヨン', check_status: 'RED', category_id: '3', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
 ]
 
 export const mockCheckHistory: CheckHistoryItem[] = [
