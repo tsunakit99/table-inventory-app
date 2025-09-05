@@ -24,7 +24,7 @@ export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
   }
 
   // データ変換
-  const checkHistory: CheckHistoryItem[] = (data as CheckHistoryWithRelations[] || []).map((item: CheckHistoryWithRelations) => ({
+  const checkHistory: CheckHistoryItem[] = ((data || []) as CheckHistoryWithRelations[]).map((item: CheckHistoryWithRelations) => ({
     id: item.id,
     productName: item.product.name,
     status: item.action_type === 'CHECK_YELLOW' ? 'YELLOW' : 
