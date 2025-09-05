@@ -1,21 +1,36 @@
 'use client'
 
 import { memo, useCallback } from 'react'
-import { User, Settings, LogOut, X } from 'lucide-react'
+import { Settings, LogOut, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
+import { signOut } from '@/actions/auth'
+import { useRouter } from 'next/navigation'
 
 interface SideMenuProps {
   isOpen: boolean
   onClose: () => void
   userName?: string
+  userAvatarUrl?: string | null
 }
 
 export const SideMenu = memo(function SideMenu({ 
   isOpen, 
   onClose, 
-  userName = "ユーザー" 
+  userName = "ユーザー",
+  userAvatarUrl = null
 }: SideMenuProps) {
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+  const router = useRouter()
+  
   const handleBackdropClick = useCallback(() => {
     onClose()
   }, [onClose])
@@ -25,15 +40,17 @@ export const SideMenu = memo(function SideMenu({
   }, [])
 
   const handleAccountSettings = useCallback(() => {
-    // TODO: アカウント設定画面への遷移
-    console.log('アカウント設定')
+    router.push('/user')
     onClose()
-  }, [onClose])
+  }, [router, onClose])
 
-  const handleLogout = useCallback(() => {
-    // TODO: ログアウト処理
-    console.log('ログアウト')
-    onClose()
+  const handleLogout = useCallback(async () => {
+    try {
+      await signOut()
+      onClose()
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
   }, [onClose])
 
   return (
@@ -61,10 +78,13 @@ export const SideMenu = memo(function SideMenu({
           style={{ backgroundColor: '#0C1E7D' }}
         >
           <div className="flex items-center gap-3 flex-1">
-            <div className="flex items-center justify-center w-10 h-10 bg-white/10 rounded-full">
-              <User className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-white font-medium text-lg">{userName}</span>
+            <Avatar className="h-10 w-10 border-2 border-white/20">
+              <AvatarImage src={userAvatarUrl || undefined} />
+              <AvatarFallback className="bg-white/10 text-white text-sm font-medium">
+                {getInitials(userName)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-white font-medium text-lg truncate max-w-[180px]">{userName}</span>
           </div>
           <Button
             variant="ghost"
