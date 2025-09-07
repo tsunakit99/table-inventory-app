@@ -1,5 +1,5 @@
 import InventoryHome from '@/components/InventoryHome'
-import { getFilteredProducts } from '@/actions/search'
+import { getFilteredProducts } from '@/actions/products'
 import { getNotificationSummary } from '@/actions/notifications'
 import { getCheckHistory } from '@/actions/history'
 import { getCategories } from '@/actions/categories'

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getUser } from '@/actions/auth'
+import { getUser } from '@/actions/users'
 import { UserProfile } from '@/components/features/user/UserProfile'
 
 export default async function UserPage() {
