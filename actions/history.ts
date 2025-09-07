@@ -2,13 +2,14 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { CheckHistoryItem, CheckHistoryWithRelations } from '@/types/history'
-import { getUser } from '@/actions/auth'
+import { getUser } from '@/actions/users'
+import { getUserDisplayName } from '@/actions/users'
 import { revalidatePath } from 'next/cache'
 
 export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
   const supabase = await createClient()
 
-  // 未完了の履歴を全て取得
+  // まず履歴データを取得
   const { data: pendingData, error: pendingError } = await supabase
     .from('check_history')
     .select(`
@@ -21,7 +22,6 @@ export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
     .eq('status', 'PENDING')
     .order('created_at', { ascending: false })
 
-  // 完了済みの履歴を20件取得
   const { data: completedData, error: completedError } = await supabase
     .from('check_history')
     .select(`
@@ -46,22 +46,33 @@ export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
   }
 
   // 両方のデータを結合
-  const allData = [...(pendingData || []), ...(completedData || [])]
+  const allData = [...(pendingData || []), ...(completedData || [])] as CheckHistoryWithRelations[]
 
-  // データ変換
-  const checkHistory: CheckHistoryItem[] = (allData as CheckHistoryWithRelations[]).map((item: CheckHistoryWithRelations) => ({
-    id: item.id,
-    productName: item.product.name,
-    status: item.action_type === 'CHECK_YELLOW' ? 'YELLOW' : 
-            item.action_type === 'CHECK_RED' ? 'RED' : 'NONE',
-    checkedAt: new Date(item.created_at),
-    quantity: item.quantity || undefined,
-    note: item.note || undefined,
-    userId: item.user_id,
-    completionStatus: item.status,
-    completedBy: item.completed_by || undefined,
-    completedAt: item.completed_at ? new Date(item.completed_at) : undefined
-  }))
+  // データ変換（ユーザー名は必要時に個別取得）
+  const checkHistory: CheckHistoryItem[] = await Promise.all(
+    allData.map(async (item: CheckHistoryWithRelations) => {
+      const [checkerName, completerName] = await Promise.all([
+        getUserDisplayName(item.user_id),
+        item.completed_by ? getUserDisplayName(item.completed_by) : Promise.resolve(undefined)
+      ])
+
+      return {
+        id: item.id,
+        productName: item.product.name,
+        status: item.action_type === 'CHECK_YELLOW' ? 'YELLOW' : 
+                item.action_type === 'CHECK_RED' ? 'RED' : 'NONE',
+        checkedAt: new Date(item.created_at),
+        quantity: item.quantity || undefined,
+        note: item.note || undefined,
+        userId: item.user_id,
+        checkerName,
+        completionStatus: item.status,
+        completedBy: item.completed_by || undefined,
+        completerName,
+        completedAt: item.completed_at ? new Date(item.completed_at) : undefined
+      }
+    })
+  )
 
   return checkHistory
 }
