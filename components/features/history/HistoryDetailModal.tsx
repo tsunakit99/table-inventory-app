@@ -137,6 +137,11 @@ export function HistoryDetailModal({
               <div>
                 <p className="text-sm font-medium text-muted-foreground">チェック日時</p>
                 <p className="text-base">{formatDateTime(historyItem.checkedAt)}</p>
+                {historyItem.checkerName && (
+                  <p className="text-sm text-blue-600 mt-1">
+                    チェック者: {historyItem.checkerName}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -182,10 +187,10 @@ export function HistoryDetailModal({
                       <span>完了日時: {formatDateTime(historyItem.completedAt)}</span>
                     </div>
                     
-                    {historyItem.completedBy && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    {historyItem.completerName && (
+                      <div className="flex items-center gap-2 text-sm text-purple-600">
                         <User className="h-4 w-4" />
-                        <span>完了者: 管理者</span>
+                        <span>完了者: {historyItem.completerName}</span>
                       </div>
                     )}
                   </div>
