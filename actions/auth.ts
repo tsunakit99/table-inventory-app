@@ -48,32 +48,3 @@ export async function signOut() {
   redirect('/auth/login')
 }
 
-export async function getUser() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
-
-export async function updateDisplayName(displayName: string) {
-  const supabase = await createClient()
-  
-  const { error } = await supabase.auth.updateUser({
-    data: { display_name: displayName }
-  })
-  
-  if (error) {
-    throw new Error(error.message)
-  }
-}
-
-export async function updateAvatar(avatarUrl: string) {
-  const supabase = await createClient()
-  
-  const { error } = await supabase.auth.updateUser({
-    data: { avatar_url: avatarUrl }
-  })
-  
-  if (error) {
-    throw new Error(error.message)
-  }
-}

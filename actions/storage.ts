@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { getUser } from './auth'
+import { getUser } from './users'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 // 内部用削除関数
