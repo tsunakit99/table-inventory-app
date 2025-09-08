@@ -15,9 +15,9 @@ import { DeleteConfirmModal } from '@/components/forms/DeleteConfirmModal'
 import { NotificationModal } from '@/components/features/history/NotificationModal'
 import { CheckHistoryItem } from '@/types/history'
 import { updateProductCheck } from '@/actions/inventory'
-import { addCategory } from '@/actions/categories'
+import { addCategory, deleteCategory } from '@/actions/categories'
 import { addProduct, deleteProduct } from '@/actions/products'
-import { getUser } from '@/actions/auth'
+import { getUser } from '@/actions/users'
 import { CheckStatus } from '@/types/database'
 import { Plus } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
@@ -143,7 +143,7 @@ export const InventoryContent = memo(function InventoryContent({
 
   // チェック状態更新
   const handleCheckSubmit = useCallback(async (data: {
-    status: 'YELLOW' | 'RED' | 'NONE'
+    status: 'YELLOW' | 'RED'
     quantity?: number
     note?: string
   }) => {
@@ -185,6 +185,28 @@ export const InventoryContent = memo(function InventoryContent({
     }
   }, [productToDelete, onRefreshData])
 
+  // カテゴリ削除
+  const handleDeleteCategory = useCallback(async (categoryId: string) => {
+    try {
+      await deleteCategory(categoryId)
+      
+      // 削除されたカテゴリが選択されていた場合、'all'に切り替え
+      if (selectedCategoryId === categoryId) {
+        onSelectedCategoryId('all')
+      }
+      
+      // カテゴリリストから削除
+      const updatedCategories = categories.filter(cat => cat.id !== categoryId)
+      onCategories(updatedCategories)
+      
+      await onRefreshData()
+    } catch (error: unknown) {
+      console.error('Failed to delete category:', error)
+      const message = error instanceof Error ? error.message : 'カテゴリの削除に失敗しました'
+      alert(message)
+    }
+  }, [categories, selectedCategoryId, onCategories, onSelectedCategoryId, onRefreshData])
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -212,6 +234,7 @@ export const InventoryContent = memo(function InventoryContent({
             selectedCategoryId={selectedCategoryId}
             onCategoryChange={onSelectedCategoryId}
             onAddCategory={handleAddCategoryOpen}
+            onDeleteCategory={handleDeleteCategory}
           />
         </div>
         
@@ -259,6 +282,7 @@ export const InventoryContent = memo(function InventoryContent({
         isOpen={isNotificationModalOpen}
         onClose={handleNotificationModalClose}
         checkHistory={checkHistory}
+        onRefreshData={onRefreshData}
       />
 
       <AddCategoryModal
