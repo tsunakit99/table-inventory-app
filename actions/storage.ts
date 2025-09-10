@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getUser } from './users'
+import { STORAGE_DELETE_DELAY } from '@/lib/constants/timing'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 // 内部用削除関数
@@ -50,7 +51,7 @@ export async function uploadAvatar(formData: FormData): Promise<string> {
   await deleteAvatarInternal(supabase, user.id)
   
   // 削除完了を保証するための短い待機
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await new Promise(resolve => setTimeout(resolve, STORAGE_DELETE_DELAY))
   
   // ユーザーごとのファイルパスを生成（タイムスタンプ付き）
   const timestamp = Date.now()

@@ -6,6 +6,7 @@ import { ProductUpdate } from '@/types/products'
 import { CheckSubmitData } from '@/types/inventory'
 import { CheckHistoryInsert } from '@/types/history'
 import { getUser } from '@/actions/users'
+import { HISTORY_SEARCH_LIMIT } from '@/lib/constants/timing'
 import { revalidatePath } from 'next/cache'
 
 export async function updateProductCheck(
@@ -44,7 +45,7 @@ export async function updateProductCheck(
       .eq('action_type', 'CHECK_YELLOW')
       .eq('status', 'PENDING')
       .order('created_at', { ascending: false })
-      .limit(1)
+      .limit(HISTORY_SEARCH_LIMIT)
 
     // 警告→緊急の昇格の場合、前の警告履歴を削除して統合メッセージで新しい履歴を作成
     if (existingHistory && existingHistory.length > 0) {

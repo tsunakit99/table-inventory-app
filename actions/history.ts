@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CheckHistoryItem, CheckHistoryWithRelations } from '@/types/history'
 import { getUser } from '@/actions/users'
 import { getUserDisplayName } from '@/actions/users'
+import { COMPLETED_HISTORY_LIMIT } from '@/lib/constants/timing'
 import { revalidatePath } from 'next/cache'
 
 export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
@@ -33,7 +34,7 @@ export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
     `)
     .eq('status', 'COMPLETED')
     .order('completed_at', { ascending: false })
-    .limit(20)
+    .limit(COMPLETED_HISTORY_LIMIT)
 
   if (pendingError) {
     console.error('Pending history fetch error:', pendingError)
