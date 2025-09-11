@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { AlertTriangle, AlertCircle, CheckCircle, Calendar, Package, FileText, CheckCheck, User } from 'lucide-react'
+import { AlertTriangle, AlertCircle, CheckCircle, Calendar, Package, FileText, CheckCheck } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { getInitials } from '@/lib/utils/user'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -99,15 +100,12 @@ export function HistoryDetailModal({
   const showCompleteButton = isPending && !isCompleting
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+    <Dialog open={isOpen} onOpenChange={onClose} modal={true}>
+      <DialogContent className="sm:max-w-lg z-50">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
             チェック詳細
           </DialogTitle>
-          <DialogDescription>
-            チェック内容の詳細情報と完了処理
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -138,9 +136,15 @@ export function HistoryDetailModal({
                 <p className="text-sm font-medium text-muted-foreground">チェック日時</p>
                 <p className="text-base">{formatDateTime(historyItem.checkedAt)}</p>
                 {historyItem.checkerName && (
-                  <p className="text-sm text-blue-600 mt-1">
-                    チェック者: {historyItem.checkerName}
-                  </p>
+                  <div className="flex items-center gap-2 text-sm mt-1">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={historyItem.checkerAvatarUrl} />
+                      <AvatarFallback className="text-[8px]">
+                        {getInitials(historyItem.checkerName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>{historyItem.checkerName}</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -181,18 +185,27 @@ export function HistoryDetailModal({
                     <span className="font-medium">完了済み</span>
                   </div>
                   
-                  <div className="pl-7 space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>完了日時: {formatDateTime(historyItem.completedAt)}</span>
-                    </div>
+                  <div className="space-y-2">
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                    <p className="text-sm font-medium text-muted-foreground">完了日時</p>
+                    <p className="text-base">{formatDateTime(historyItem.completedAt)}</p>
+                  
                     
                     {historyItem.completerName && (
-                      <div className="flex items-center gap-2 text-sm text-purple-600">
-                        <User className="h-4 w-4" />
-                        <span>完了者: {historyItem.completerName}</span>
+                      <div className="flex items-center gap-2 text-sm mb-1">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={historyItem.completerAvatarUrl} />
+                          <AvatarFallback className="text-[8px]">
+                            {getInitials(historyItem.completerName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{historyItem.completerName}</span>
                       </div>
                     )}
+                    </div>
+                    </div>
                   </div>
                 </div>
               </>
