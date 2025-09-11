@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, memo } from 'react'
+import { useCallback, memo } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
@@ -10,7 +10,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/tailwind'
+import { useLongPress } from '@/lib/hooks/useLongPress'
 import { Category } from '@/types/categories'
 
 export type { Category }
@@ -35,51 +36,9 @@ const CategoryButton = memo(function CategoryButton({
   onClick: () => void,
   onDelete?: (categoryId: string) => void
 }) {
-  const [isLongPressActive, setIsLongPressActive] = useState(false)
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null)
-
-  const handleMouseDown = useCallback(() => {
-    if (category === 'all' || !onDelete) return
-    
-    const timer = setTimeout(() => {
-      setIsLongPressActive(true)
-    }, 800)
-    setLongPressTimer(timer)
-  }, [category, onDelete])
-
-  const handleMouseUp = useCallback(() => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer)
-      setLongPressTimer(null)
-    }
-    setIsLongPressActive(false)
-  }, [longPressTimer])
-
-  const handleTouchStart = useCallback(() => {
-    if (category === 'all' || !onDelete) return
-    
-    const timer = setTimeout(() => {
-      setIsLongPressActive(true)
-    }, 800)
-    setLongPressTimer(timer)
-  }, [category, onDelete])
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer)
-      setLongPressTimer(null)
-    }
-    if (isLongPressActive) {
-      e.preventDefault()
-    }
-    setIsLongPressActive(false)
-  }, [longPressTimer, isLongPressActive])
-
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    if (category === 'all' || !onDelete) return
-    e.preventDefault()
-    setIsLongPressActive(true)
-  }, [category, onDelete])
+  const handleLongPress = useCallback(() => {
+    // 長押し処理は useLongPress フックで管理
+  }, [])
 
   const handleDeleteClick = useCallback(() => {
     if (category !== 'all' && onDelete) {
@@ -87,16 +46,29 @@ const CategoryButton = memo(function CategoryButton({
     }
   }, [category, onDelete])
 
-  if (category !== 'all' && onDelete && isLongPressActive) {
+  const longPress = useLongPress({
+    onLongPress: handleLongPress,
+    onClick,
+    disabled: category === 'all' || !onDelete
+  })
+
+  const handleDropdownClose = useCallback((open: boolean) => {
+    if (!open) {
+      longPress.reset()
+    }
+  }, [longPress])
+
+  if (category !== 'all' && onDelete && longPress.isLongPressed) {
     return (
-      <DropdownMenu open={isLongPressActive} onOpenChange={setIsLongPressActive}>
+      <DropdownMenu open={longPress.isLongPressed} onOpenChange={handleDropdownClose}>
         <DropdownMenuTrigger asChild>
           <Button
             variant={isSelected ? "default" : "secondary"}
             size="sm"
             className={cn(
               "rounded-full whitespace-nowrap",
-              isSelected ? "bg-[#0C1E7D] text-white hover:opacity-80" : ""
+              isSelected ? "bg-[#0C1E7D] text-white hover:opacity-80" : "",
+              longPress.isPressed && "opacity-70 scale-95" // 視覚的フィードバック
             )}
           >
             {category.name}
@@ -116,16 +88,11 @@ const CategoryButton = memo(function CategoryButton({
     <Button
       variant={isSelected ? "default" : "secondary"}
       size="sm"
-      onClick={onClick}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onContextMenu={handleContextMenu}
+      {...longPress.handlers}
       className={cn(
-        "rounded-full whitespace-nowrap",
-        isSelected ? "bg-[#0C1E7D] text-white hover:opacity-80" : ""
+        "rounded-full whitespace-nowrap transition-all",
+        isSelected ? "bg-[#0C1E7D] text-white hover:opacity-80" : "",
+        longPress.isPressed && "opacity-70 scale-95" // 押下状態の視覚的フィードバック
       )}
     >
       {category === 'all' ? 'すべて' : category.name}

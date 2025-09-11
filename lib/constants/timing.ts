@@ -9,6 +9,7 @@ export const STORAGE_DELETE_DELAY = 100 // ms - 削除完了を保証するた�
 export const MODAL_TRANSITION_DELAY = 300 // ms - モーダルの表示/非表示トランジション
 export const DEBOUNCE_DELAY = 500 // ms - 検索入力のデバウンス
 export const TOAST_DISPLAY_DURATION = 3000 // ms - トースト通知の表示時間
+export const LONG_PRESS_DURATION = 800 // ms - 長押し判定時間
 
 // API関連
 export const REQUEST_TIMEOUT = 30000 // ms - APIリクエストタイムアウト
