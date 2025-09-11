@@ -68,3 +68,55 @@ export async function getUserDisplayName(userId: string): Promise<string> {
   }
 }
 
+/**
+ * ユーザーIDからユーザー情報（名前とアバターURL）を取得する（管理者権限）
+ * @param userId - ユーザーID
+ * @returns ユーザー情報
+ */
+export async function getUserInfo(userId: string): Promise<{ name: string; avatarUrl?: string }> {
+  try {
+    const supabase = createAdminClient()
+
+    const { data, error } = await supabase.auth.admin.getUserById(userId)
+
+    if (error || !data.user) {
+      console.warn(`Failed to fetch user ${userId}:`, error)
+      return { name: 'Unknown User' }
+    }
+    
+    return {
+      name: data.user.user_metadata?.display_name || 'Unknown User',
+      avatarUrl: data.user.user_metadata?.avatar_url
+    }
+  } catch (error) {
+    console.warn(`Error fetching user ${userId}:`, error)
+    return { name: 'Unknown User' }
+  }
+}
+  
+  /**
+   * 複数のユーザーIDからユーザー情報を一括取得する（管理者権限）
+   * @param userIds - ユーザーIDの配列
+  * @returns ユーザーID -> ユーザー情報のマップ
+  */
+export async function getUserInfos(userIds: string[]): Promise<Map<string, { name: string; avatarUrl?: string }>> {
+  const userInfoMap = new Map<string, { name: string; avatarUrl?: string }>()
+  
+  // 重複を除去
+  const uniqueUserIds = [...new Set(userIds.filter(Boolean))]
+  
+  // 並列でユーザー情報を取得
+  const promises = uniqueUserIds.map(async (userId) => {
+    const userInfo = await getUserInfo(userId)
+    return [userId, userInfo] as [string, { name: string; avatarUrl?: string }]
+  })
+  
+  const results = await Promise.all(promises)
+  
+  // Mapに結果を格納
+  results.forEach(([userId, userInfo]) => {
+    userInfoMap.set(userId, userInfo)
+  })
+  
+  return userInfoMap
+}
