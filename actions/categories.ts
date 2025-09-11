@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Category, CategoryInsert } from '@/types/categories'
 import { revalidatePath } from 'next/cache'
+import { logWarning } from '@/lib/utils/error-handler'
 
 export async function addCategory(categoryName: string): Promise<Category> {
   const supabase = await createClient()
@@ -19,7 +20,7 @@ export async function addCategory(categoryName: string): Promise<Category> {
     .single()
 
   if (error) {
-    console.error('Category creation error:', error)
+    logWarning(error, 'category-create-db', 'Category creation error')
     throw new Error('カテゴリの作成に失敗しました')
   }
 
@@ -36,7 +37,7 @@ export async function getCategories(): Promise<Category[]> {
     .order('name')
 
   if (error) {
-    console.error('Categories fetch error:', error)
+    logWarning(error, 'categories-fetch-db', 'Categories fetch error')
     throw new Error('カテゴリの取得に失敗しました')
   }
 
@@ -53,7 +54,7 @@ export async function deleteCategory(categoryId: string): Promise<void> {
     .eq('category_id', categoryId)
 
   if (countError) {
-    console.error('Product count error:', countError)
+    logWarning(countError, 'product-count-check', 'Product count error')
     throw new Error('商品数の確認に失敗しました')
   }
 
@@ -67,7 +68,7 @@ export async function deleteCategory(categoryId: string): Promise<void> {
     .eq('id', categoryId)
 
   if (error) {
-    console.error('Category deletion error:', error)
+    logWarning(error, 'category-delete-db', 'Category deletion error')
     throw new Error('カテゴリの削除に失敗しました')
   }
 

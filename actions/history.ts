@@ -6,6 +6,7 @@ import { getUser } from '@/actions/users'
 import { getUserInfos } from '@/actions/users'
 import { COMPLETED_HISTORY_LIMIT } from '@/lib/constants/timing'
 import { revalidatePath } from 'next/cache'
+import { logWarning } from '@/lib/utils/error-handler'
 
 export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
   const supabase = await createClient()
@@ -37,12 +38,12 @@ export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
     .limit(COMPLETED_HISTORY_LIMIT)
 
   if (pendingError) {
-    console.error('Pending history fetch error:', pendingError)
+    logWarning(pendingError, 'pending-history-fetch-db', 'Pending history fetch error')
     throw new Error('未完了履歴の取得に失敗しました')
   }
 
   if (completedError) {
-    console.error('Completed history fetch error:', completedError)
+    logWarning(completedError, 'completed-history-fetch-db', 'Completed history fetch error')
     throw new Error('完了済み履歴の取得に失敗しました')
   }
 
@@ -103,7 +104,7 @@ export async function completeCheckHistory(historyId: string): Promise<void> {
     .single()
 
   if (fetchError || !historyData) {
-    console.error('History fetch error:', fetchError)
+    logWarning(fetchError, 'history-detail-fetch-db', 'History fetch error')
     throw new Error('履歴の取得に失敗しました')
   }
 
@@ -119,7 +120,7 @@ export async function completeCheckHistory(historyId: string): Promise<void> {
     .eq('id', historyId)
 
   if (updateError) {
-    console.error('Check history completion error:', updateError)
+    logWarning(updateError, 'history-completion-db', 'Check history completion error')
     throw new Error('履歴の完了処理に失敗しました')
   }
 
@@ -131,7 +132,7 @@ export async function completeCheckHistory(historyId: string): Promise<void> {
     .eq('id', (historyData as { product_id: string }).product_id)
 
   if (productUpdateError) {
-    console.error('Product status reset error:', productUpdateError)
+    logWarning(productUpdateError, 'product-status-reset-db', 'Product status reset error')
     throw new Error('商品ステータスのリセットに失敗しました')
   }
 

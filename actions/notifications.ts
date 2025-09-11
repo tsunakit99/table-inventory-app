@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { NotificationSummary } from '@/types/notifications'
+import { logWarning } from '@/lib/utils/error-handler'
 
 export async function getNotificationSummary(): Promise<NotificationSummary> {
   const supabase = await createClient()
@@ -13,7 +14,7 @@ export async function getNotificationSummary(): Promise<NotificationSummary> {
     .eq('status', 'PENDING')
 
   if (error) {
-    console.error('Notifications fetch error:', error)
+    logWarning(error, 'notifications-fetch-db', 'Notifications fetch error')
     throw new Error('通知の取得に失敗しました')
   }
 

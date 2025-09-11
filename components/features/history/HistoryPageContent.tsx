@@ -16,6 +16,7 @@ import { getNotificationSummary } from '@/actions/notifications'
 import { getUser } from '@/actions/users'
 import { HistoryDetailModal } from './HistoryDetailModal'
 import type { User } from '@supabase/supabase-js'
+import { logWarning } from '@/lib/utils/error-handler'
 
 interface HistoryPageContentProps {
   initialCheckHistory: CheckHistoryItem[]
@@ -126,7 +127,7 @@ export function HistoryPageContent({ initialCheckHistory, initialNotifications }
         const userData = await getUser()
         setUser(userData)
       } catch (error) {
-        console.error('Failed to fetch user:', error)
+        logWarning(error, 'user-fetch', 'Failed to fetch user data')
       }
     }
     fetchUser()
@@ -152,7 +153,7 @@ export function HistoryPageContent({ initialCheckHistory, initialNotifications }
       setCheckHistory(newHistory)
       setNotifications(newNotifications)
     } catch (error) {
-      console.error('Failed to refresh history:', error)
+      logWarning(error, 'data-refresh', 'Failed to refresh history data')
     }
   }, [])
 

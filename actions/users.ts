@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { User } from '@supabase/supabase-js'
+import { logWarning } from '@/lib/utils/error-handler'
 
 /**
  * 現在認証されているユーザーを取得する
@@ -64,7 +65,7 @@ export async function getUserDisplayName(userId: string): Promise<string> {
     
     return data.user.user_metadata?.display_name || 'Unknown User'
   } catch (error) {
-    console.warn(`Error fetching user ${userId}:`, error)
+    logWarning(error, 'user-fetch', `Error fetching user ${userId}`)
     return 'Unknown User'
   }
 }
@@ -90,7 +91,7 @@ export async function getUserInfo(userId: string): Promise<{ name: string; avata
       avatarUrl: data.user.user_metadata?.avatar_url
     }
   } catch (error) {
-    console.warn(`Error fetching user ${userId}:`, error)
+    logWarning(error, 'user-fetch', `Error fetching user ${userId}`)
     return { name: 'Unknown User' }
   }
 }
@@ -158,7 +159,7 @@ export async function getUserInfos(userIds: string[]): Promise<Map<string, { nam
     })
     
   } catch (error) {
-    console.warn('Error in bulk user fetch, falling back to individual calls:', error)
+    logWarning(error, 'user-bulk-fetch', 'Error in bulk user fetch, falling back to individual calls')
     
     // フォールバック: 個別取得
     const promises = uniqueUserIds.map(async (userId) => {

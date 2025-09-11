@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getUser } from './users'
 import { STORAGE_DELETE_DELAY } from '@/lib/constants/timing'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { logWarning } from '@/lib/utils/error-handler'
 
 // 内部用削除関数
 async function deleteAvatarInternal(supabase: SupabaseClient, userId: string): Promise<void> {
@@ -13,7 +14,7 @@ async function deleteAvatarInternal(supabase: SupabaseClient, userId: string): P
     .list(`${userId}/avatars/`)
 
   if (listError) {
-    console.error('Avatar list error:', listError)
+    logWarning(listError, 'avatar-list-storage', 'Avatar list error')
     return
   }
 
@@ -26,7 +27,7 @@ async function deleteAvatarInternal(supabase: SupabaseClient, userId: string): P
       .remove(filesToDelete)
 
     if (error) {
-      console.error('Avatar delete error:', error)
+      logWarning(error, 'avatar-delete-storage', 'Avatar delete error')
     }
   }
 }
@@ -62,7 +63,7 @@ export async function uploadAvatar(formData: FormData): Promise<string> {
     .upload(filePath, file)
 
   if (error) {
-    console.error('Avatar upload error:', error)
+    logWarning(error, 'avatar-upload-storage', 'Avatar upload error')
     throw new Error('画像のアップロードに失敗しました')
   }
 

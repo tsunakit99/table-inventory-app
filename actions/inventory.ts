@@ -8,6 +8,7 @@ import { CheckHistoryInsert } from '@/types/history'
 import { getUser } from '@/actions/users'
 import { HISTORY_SEARCH_LIMIT } from '@/lib/constants/timing'
 import { revalidatePath } from 'next/cache'
+import { logWarning } from '@/lib/utils/error-handler'
 
 export async function updateProductCheck(
   productId: string, 
@@ -32,7 +33,7 @@ export async function updateProductCheck(
     .eq('id', productId)
 
   if (updateError) {
-    console.error('Product update error:', updateError)
+    logWarning(updateError, 'product-status-update-db', 'Product update error')
     throw new Error('商品のチェックステータス更新に失敗しました')
   }
 
@@ -84,7 +85,7 @@ export async function updateProductCheck(
     .insert(historyData)
 
   if (historyError) {
-    console.error('Check history creation error:', historyError)
+    logWarning(historyError, 'check-history-create-db', 'Check history creation error')
     throw new Error('チェック履歴の作成に失敗しました')
   }
 
