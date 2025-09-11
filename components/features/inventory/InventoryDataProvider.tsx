@@ -5,7 +5,6 @@ import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { InventoryContent } from './InventoryContent'
 import { FilteredProductsResult } from '@/types/search'
 import { NotificationSummary } from '@/types/notifications'
-import { CheckStatus } from '@/types/database'
 import { Category } from '@/types/categories'
 import { CheckHistoryItem } from '@/types/history'
 import { getFilteredProducts } from '@/actions/products'
@@ -25,9 +24,7 @@ export function InventoryDataProvider({
   initialNotifications,
   initialCheckHistory
 }: InventoryDataProviderProps) {
-  const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all')
-  const [statusFilters, setStatusFilters] = useState<CheckStatus[]>([])
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   
   // データ状態管理
@@ -56,16 +53,8 @@ export function InventoryDataProvider({
   }, [])
 
   // コールバックを安定化
-  const handleSearchQuery = useCallback((query: string) => {
-    setSearchQuery(query)
-  }, [])
-
   const handleSelectedCategoryId = useCallback((id: string) => {
     setSelectedCategoryId(id)
-  }, [])
-
-  const handleStatusFilters = useCallback((filters: CheckStatus[]) => {
-    setStatusFilters(filters)
   }, [])
 
   const handleCategories = useCallback((newCategories: Category[]) => {
@@ -73,28 +62,16 @@ export function InventoryDataProvider({
   }, [])
 
 
-  // フィルタ変更時のデータ
+  // カテゴリフィルタリング済みのデータ
   const filteredData = useMemo(() => {
     let products
     
-    if (searchQuery === '' && selectedCategoryId === 'all' && statusFilters.length === 0) {
+    if (selectedCategoryId === 'all') {
       products = currentData.products
     } else {
-      // フィルタが変更されている場合はクライアントサイドフィルタリング
+      // カテゴリフィルタリング
       const filtered = initialProducts.products.filter(product => {
-        // カテゴリフィルター
-        if (selectedCategoryId !== 'all' && product.category_id !== selectedCategoryId) {
-          return false
-        }
-        // 検索フィルター
-        if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-          return false
-        }
-        // ステータスフィルター
-        if (statusFilters.length > 0 && !statusFilters.includes(product.check_status)) {
-          return false
-        }
-        return true
+        return product.category_id === selectedCategoryId
       })
       
       products = { products: filtered, totalCount: filtered.length }
@@ -105,17 +82,15 @@ export function InventoryDataProvider({
       notifications: currentData.notifications,
       checkHistory: currentData.checkHistory
     }
-  }, [searchQuery, selectedCategoryId, statusFilters, currentData.products, currentData.notifications, currentData.checkHistory, initialProducts])
+  }, [selectedCategoryId, currentData.products, currentData.notifications, currentData.checkHistory, initialProducts])
 
   return (
     <ErrorBoundary>
       <Suspense fallback={<InventoryLoadingSkeleton />}>
         <InventoryContent
           data={filteredData}
-          onSearchQuery={handleSearchQuery}
           selectedCategoryId={selectedCategoryId}
           onSelectedCategoryId={handleSelectedCategoryId}
-          onStatusFilters={handleStatusFilters}
           categories={categories}
           onCategories={handleCategories}
           onRefreshData={refreshData}
