@@ -138,7 +138,7 @@ export const InventoryContent = memo(function InventoryContent({
 
   // チェックボタンクリック
   const handleCheckClick = useCallback((productId: string) => {
-    const product = allProducts.find((p: Product) => p.id === productId)
+    const product = allProducts.find(p => p.id === productId)
     if (product) {
       setSelectedProduct(product)
       setIsCheckModalOpen(true)
@@ -173,7 +173,7 @@ export const InventoryContent = memo(function InventoryContent({
 
   // 商品削除
   const handleDeleteClick = useCallback((productId: string) => {
-    const product = allProducts.find((p: Product) => p.id === productId)
+    const product = allProducts.find(p => p.id === productId)
     if (product) {
       setProductToDelete(product)
       setIsDeleteModalOpen(true)
