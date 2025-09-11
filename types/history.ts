@@ -12,9 +12,11 @@ export interface CheckHistoryItem {
   note?: string
   userId: string
   checkerName?: string
+  checkerAvatarUrl?: string
   completionStatus: CompletionStatus
   completedBy?: string
   completerName?: string
+  completerAvatarUrl?: string
   completedAt?: Date
 }
 
