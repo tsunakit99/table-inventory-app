@@ -134,8 +134,6 @@ export async function getUserInfos(userIds: string[]): Promise<Map<string, { nam
       }
       
       allUsers = allUsers.concat(data.users)
-
-      console.log(`Fetched ${allUsers.length} users so far...`)
       
       // 必要なユーザーがすべて見つかったら終了
       const foundUserIds = new Set(allUsers.map(user => user.id))
