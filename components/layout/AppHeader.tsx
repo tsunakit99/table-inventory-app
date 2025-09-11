@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { memo } from 'react'
 import { Menu } from 'lucide-react'
 import { NotificationButton } from '@/components/features/history/NotificationButton'
@@ -32,14 +33,16 @@ export const AppHeader = memo(function AppHeader({
             </button>
             
             {/* ロゴ画像 */}
-            <Image
-              src="/tableicon.png"
-              alt="居食屋 たーぶる"
-              width={200}
-              height={50}
-              className="object-contain w-auto h-[30px]"
-              priority
-            />
+            <Link href="/" className="cursor-pointer">
+              <Image
+                src="/tableicon.png"
+                alt="居食屋 たーぶる"
+                width={200}
+                height={50}
+                className="object-contain w-auto h-[30px] hover:opacity-80 transition-opacity"
+                priority
+              />
+            </Link>
           </div>
           
           <NotificationButton

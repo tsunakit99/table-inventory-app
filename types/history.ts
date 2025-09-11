@@ -1,6 +1,6 @@
 // 履歴関連の型定義
 
-import { CheckStatus, ActionType } from './database'
+import { CheckStatus, ActionType, CompletionStatus } from './database'
 
 // チェック履歴項目の型（UI表示用）
 export interface CheckHistoryItem {
@@ -10,6 +10,14 @@ export interface CheckHistoryItem {
   checkedAt: Date
   quantity?: number
   note?: string
+  userId: string
+  checkerName?: string
+  checkerAvatarUrl?: string
+  completionStatus: CompletionStatus
+  completedBy?: string
+  completerName?: string
+  completerAvatarUrl?: string
+  completedAt?: Date
 }
 
 // Supabase insert用の型
@@ -18,6 +26,8 @@ export interface CheckHistoryInsert {
   action_type: ActionType
   quantity?: number | null
   note?: string | null
+  user_id: string
+  status?: CompletionStatus
 }
 
 // Supabase クエリのレスポンス型定義
@@ -27,6 +37,10 @@ export interface CheckHistoryWithRelations {
   action_type: ActionType
   quantity: number | null
   note: string | null
+  user_id: string
+  status: CompletionStatus
+  completed_by: string | null
+  completed_at: string | null
   created_at: string
   product: {
     id: string

@@ -1,10 +1,17 @@
 'use client'
 
-import { Plus } from 'lucide-react'
+import { useCallback, memo } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { cn } from '@/lib/utils'
-import { memo } from 'react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils/tailwind'
+import { useLongPress } from '@/lib/hooks/useLongPress'
 import { Category } from '@/types/categories'
 
 export type { Category }
@@ -14,29 +21,98 @@ interface CategoryTabsProps {
   selectedCategoryId?: string
   onCategoryChange?: (categoryId: string) => void
   onAddCategory?: () => void
+  onDeleteCategory?: (categoryId: string) => void
   className?: string
 }
 
 const CategoryButton = memo(function CategoryButton({ 
   category, 
   isSelected, 
-  onClick 
+  onClick,
+  onDelete
 }: { 
   category: Category | 'all', 
   isSelected: boolean, 
-  onClick: () => void 
+  onClick: () => void,
+  onDelete?: (categoryId: string) => void
 }) {
+  const handleLongPress = useCallback(() => {
+    // 長押し処理は useLongPress フックで管理
+  }, [])
+
+  const handleDeleteClick = useCallback(() => {
+    if (category !== 'all' && onDelete) {
+      onDelete(category.id)
+    }
+  }, [category, onDelete])
+
+  const longPress = useLongPress({
+    onLongPress: handleLongPress,
+    onClick,
+    disabled: category === 'all' || !onDelete
+  })
+
+  const handleDropdownClose = useCallback((open: boolean) => {
+    if (!open) {
+      longPress.reset()
+    }
+  }, [longPress])
+
+  if (category !== 'all' && onDelete && longPress.isLongPressed) {
+    return (
+      <DropdownMenu open={longPress.isLongPressed} onOpenChange={handleDropdownClose}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant={isSelected ? "default" : "secondary"}
+            size="sm"
+            className={cn(
+              "rounded-full whitespace-nowrap",
+              isSelected ? "bg-[#0C1E7D] text-white hover:opacity-80" : "",
+              longPress.isPressed && "opacity-70 scale-95" // 視覚的フィードバック
+            )}
+          >
+            {category.name}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center">
+          <DropdownMenuItem onClick={handleDeleteClick} className="text-red-600 hover:text-red-700">
+            <Trash2 className="h-4 w-4 mr-2" />
+            カテゴリを削除
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
+  // 「すべて」カテゴリは直接クリックハンドラーを使用
+  if (category === 'all') {
+    return (
+      <Button
+        variant={isSelected ? "default" : "secondary"}
+        size="sm"
+        onClick={onClick}
+        className={cn(
+          "rounded-full whitespace-nowrap transition-all",
+          isSelected ? "bg-[#0C1E7D] text-white hover:opacity-80" : ""
+        )}
+      >
+        すべて
+      </Button>
+    )
+  }
+
   return (
     <Button
       variant={isSelected ? "default" : "secondary"}
       size="sm"
-      onClick={onClick}
+      {...longPress.handlers}
       className={cn(
-        "rounded-full whitespace-nowrap",
-        isSelected ? "bg-[#0C1E7D] text-white hover:opacity-80" : ""
+        "rounded-full whitespace-nowrap transition-all",
+        isSelected ? "bg-[#0C1E7D] text-white hover:opacity-80" : "",
+        longPress.isPressed && "opacity-70 scale-95" // 押下状態の視覚的フィードバック
       )}
     >
-      {category === 'all' ? 'すべて' : category.name}
+      {category.name}
     </Button>
   )
 })
@@ -46,6 +122,7 @@ export const CategoryTabs = memo(function CategoryTabs({
   selectedCategoryId,
   onCategoryChange,
   onAddCategory,
+  onDeleteCategory,
   className
 }: CategoryTabsProps) {
 
@@ -67,6 +144,7 @@ export const CategoryTabs = memo(function CategoryTabs({
               category={category}
               isSelected={selectedCategoryId === category.id}
               onClick={() => onCategoryChange?.(category.id)}
+              onDelete={onDeleteCategory}
             />
           ))}
 

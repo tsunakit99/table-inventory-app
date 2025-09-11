@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, memo } from 'react'
-import { CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react'
+import { AlertTriangle, AlertCircle } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/tailwind'
 import { CheckStatus } from '@/types/database'
 
 interface CheckModalProps {
@@ -23,7 +23,7 @@ interface CheckModalProps {
   currentStatus: CheckStatus
   onClose: () => void
   onSubmit: (data: {
-    status: 'YELLOW' | 'RED' | 'NONE'
+    status: 'YELLOW' | 'RED'
     quantity?: number
     note?: string
   }) => void
@@ -34,18 +34,13 @@ const StatusButton = memo(function StatusButton({
   isSelected, 
   onClick 
 }: { 
-  status: 'YELLOW' | 'RED' | 'NONE', 
+  status: 'YELLOW' | 'RED', 
   isSelected: boolean, 
   onClick: () => void 
 }) {
   let icon, text, selectedClassName
   
   switch (status) {
-    case 'NONE':
-      icon = <CheckCircle className="h-6 w-6" />
-      text = '正常'
-      selectedClassName = "bg-green-50 border-green-300 text-green-800 hover:bg-green-100"
-      break
     case 'YELLOW':
       icon = <AlertTriangle className="h-6 w-6" />
       text = '要注意'
@@ -124,13 +119,10 @@ const NoteTextarea = memo(function NoteTextarea({
 export const CheckModal = memo(function CheckModal({
   isOpen,
   productName,
-  currentStatus,
   onClose,
   onSubmit
 }: CheckModalProps) {
-  const [selectedStatus, setSelectedStatus] = useState<'YELLOW' | 'RED' | 'NONE'>(
-    currentStatus === 'NONE' ? 'YELLOW' : 'NONE'
-  )
+  const [selectedStatus, setSelectedStatus] = useState<'YELLOW' | 'RED'>('YELLOW')
   const [quantity, setQuantity] = useState<string>('')
   const [note, setNote] = useState('')
 
@@ -181,8 +173,8 @@ export const CheckModal = memo(function CheckModal({
           {/* チェック状態選択 */}
           <fieldset>
             <legend className="text-base font-medium">チェック状態</legend>
-            <div className="grid grid-cols-3 gap-2 mt-3">
-              {(['NONE', 'YELLOW', 'RED'] as const).map((status) => (
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              {(['YELLOW', 'RED'] as const).map((status) => (
                 <StatusButton
                   key={status}
                   status={status}

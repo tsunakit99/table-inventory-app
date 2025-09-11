@@ -12,12 +12,11 @@ import { CheckModal } from '@/components/forms/CheckModal'
 import { AddCategoryModal } from '@/components/features/categories/AddCategoryModal'
 import { AddProductModal } from '@/components/features/products/AddProductModal'
 import { DeleteConfirmModal } from '@/components/forms/DeleteConfirmModal'
-import { NotificationModal } from '@/components/features/history/NotificationModal'
 import { CheckHistoryItem } from '@/types/history'
 import { updateProductCheck } from '@/actions/inventory'
-import { addCategory } from '@/actions/categories'
+import { addCategory, deleteCategory } from '@/actions/categories'
 import { addProduct, deleteProduct } from '@/actions/products'
-import { getUser } from '@/actions/auth'
+import { getUser } from '@/actions/users'
 import { CheckStatus } from '@/types/database'
 import { Plus } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
@@ -56,7 +55,6 @@ export const InventoryContent = memo(function InventoryContent({
   // データを直接使用
   const { products } = data.products
   const notifications = data.notifications
-  const checkHistory = data.checkHistory
   
   // ユーザー情報状態
   const [user, setUser] = useState<User | null>(null)
@@ -77,17 +75,11 @@ export const InventoryContent = memo(function InventoryContent({
   // UI状態管理
   const [isCheckModalOpen, setIsCheckModalOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false)
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false)
-
-  // 通知クリック
-  const handleNotificationClick = useCallback(() => {
-    setIsNotificationModalOpen(true)
-  }, [])
 
   // サイドメニュー開閉
   const handleMenuClick = useCallback(() => {
@@ -104,9 +96,6 @@ export const InventoryContent = memo(function InventoryContent({
     setSelectedProduct(null)
   }, [])
 
-  const handleNotificationModalClose = useCallback(() => {
-    setIsNotificationModalOpen(false)
-  }, [])
 
   const handleAddCategoryModalClose = useCallback(() => {
     setIsAddCategoryModalOpen(false)
@@ -143,7 +132,7 @@ export const InventoryContent = memo(function InventoryContent({
 
   // チェック状態更新
   const handleCheckSubmit = useCallback(async (data: {
-    status: 'YELLOW' | 'RED' | 'NONE'
+    status: 'YELLOW' | 'RED'
     quantity?: number
     note?: string
   }) => {
@@ -185,13 +174,34 @@ export const InventoryContent = memo(function InventoryContent({
     }
   }, [productToDelete, onRefreshData])
 
+  // カテゴリ削除
+  const handleDeleteCategory = useCallback(async (categoryId: string) => {
+    try {
+      await deleteCategory(categoryId)
+      
+      // 削除されたカテゴリが選択されていた場合、'all'に切り替え
+      if (selectedCategoryId === categoryId) {
+        onSelectedCategoryId('all')
+      }
+      
+      // カテゴリリストから削除
+      const updatedCategories = categories.filter(cat => cat.id !== categoryId)
+      onCategories(updatedCategories)
+      
+      await onRefreshData()
+    } catch (error: unknown) {
+      console.error('Failed to delete category:', error)
+      const message = error instanceof Error ? error.message : 'カテゴリの削除に失敗しました'
+      alert(message)
+    }
+  }, [categories, selectedCategoryId, onCategories, onSelectedCategoryId, onRefreshData])
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <AppHeader
         hasNewNotifications={notifications.hasNewNotifications}
         notificationCount={notifications.notificationCount}
-        onNotificationClick={handleNotificationClick}
         onMenuClick={handleMenuClick}
       />
 
@@ -212,6 +222,7 @@ export const InventoryContent = memo(function InventoryContent({
             selectedCategoryId={selectedCategoryId}
             onCategoryChange={onSelectedCategoryId}
             onAddCategory={handleAddCategoryOpen}
+            onDeleteCategory={handleDeleteCategory}
           />
         </div>
         
@@ -254,12 +265,6 @@ export const InventoryContent = memo(function InventoryContent({
           onSubmit={handleCheckSubmit}
         />
       )}
-
-      <NotificationModal
-        isOpen={isNotificationModalOpen}
-        onClose={handleNotificationModalClose}
-        checkHistory={checkHistory}
-      />
 
       <AddCategoryModal
         isOpen={isAddCategoryModalOpen}

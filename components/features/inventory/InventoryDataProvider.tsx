@@ -8,7 +8,7 @@ import { NotificationSummary } from '@/types/notifications'
 import { CheckStatus } from '@/types/database'
 import { Category } from '@/types/categories'
 import { CheckHistoryItem } from '@/types/history'
-import { getFilteredProducts } from '@/actions/search'
+import { getFilteredProducts } from '@/actions/products'
 import { getNotificationSummary } from '@/actions/notifications'
 import { getCheckHistory } from '@/actions/history'
 

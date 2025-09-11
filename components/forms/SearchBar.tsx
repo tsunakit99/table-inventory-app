@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useCallback, useTransition, memo } from 'react'
-import { Search, X, Filter } from 'lucide-react'
+import { Search, X, Filter, AlertTriangle, AlertCircle, } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { CheckStatus } from '@/types/database'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/tailwind'
 
 interface SearchBarProps {
   placeholder?: string
@@ -112,7 +112,8 @@ export const SearchBar = memo(function SearchBar({
                   onChange={() => toggleFilter('YELLOW')}
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">警告</span>
+                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                <span className="text-sm">要注意</span>
               </label>
               <label htmlFor="filter-red" className="flex items-center space-x-2 cursor-pointer">
                 <input
@@ -124,7 +125,8 @@ export const SearchBar = memo(function SearchBar({
                   onChange={() => toggleFilter('RED')}
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">危険</span>
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                <span className="text-sm">緊急</span>
               </label>
             </div>
             {filters.length > 0 && (

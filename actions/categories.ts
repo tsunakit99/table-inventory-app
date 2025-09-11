@@ -42,3 +42,34 @@ export async function getCategories(): Promise<Category[]> {
 
   return data || []
 }
+
+export async function deleteCategory(categoryId: string): Promise<void> {
+  const supabase = await createClient()
+
+  // まずそのカテゴリに属する商品の数をチェック
+  const { data: productCount, error: countError } = await supabase
+    .from('products')
+    .select('id', { count: 'exact' })
+    .eq('category_id', categoryId)
+
+  if (countError) {
+    console.error('Product count error:', countError)
+    throw new Error('商品数の確認に失敗しました')
+  }
+
+  if (productCount && productCount.length > 0) {
+    throw new Error('このカテゴリには商品が登録されているため削除できません。先に商品を削除するか、別のカテゴリに移動してください。')
+  }
+
+  const { error } = await supabase
+    .from('categories')
+    .delete()
+    .eq('id', categoryId)
+
+  if (error) {
+    console.error('Category deletion error:', error)
+    throw new Error('カテゴリの削除に失敗しました')
+  }
+
+  revalidatePath('/')
+}
