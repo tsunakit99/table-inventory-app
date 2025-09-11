@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertTriangle, AlertCircle, Trash2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/tailwind'
 import { useState, memo, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Product } from '@/types/products'

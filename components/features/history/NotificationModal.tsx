@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/tailwind'
 import { CheckHistoryItem } from '@/types/history'
 import { completeCheckHistory } from '@/actions/history'
 import { HistoryDetailModal } from './HistoryDetailModal'

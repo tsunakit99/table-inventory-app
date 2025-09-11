@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { CheckStatus } from '@/types/database'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/tailwind'
 
 interface SearchBarProps {
   placeholder?: string
