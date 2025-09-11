@@ -66,7 +66,9 @@ function getDefaultUserMessage(context: string): string {
     'avatar-upload': '画像のアップロードに失敗しました',
     'logout': 'ログアウトに失敗しました',
     'data-fetch': 'データの取得に失敗しました',
-    'data-refresh': 'データの更新に失敗しました'
+    'data-refresh': 'データの更新に失敗しました',
+    'login': 'ログインに失敗しました',
+    'signup': 'アカウント作成に失敗しました'
   }
 
   return contextMessages[context] || '操作に失敗しました'
