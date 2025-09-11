@@ -82,8 +82,58 @@ export const userProfileSchema = z.object({
     .transform((val) => val.trim())
 })
 
+/**
+ * ログイン用のバリデーションスキーマ
+ */
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'メールアドレスは必須です')
+    .email('有効なメールアドレスを入力してください')
+    .transform((val) => val.trim()),
+  password: z
+    .string()
+    .min(1, 'パスワードは必須です')
+    .min(6, 'パスワードは8文字以上で入力してください')
+})
+
+/**
+ * サインアップ用のバリデーションスキーマ
+ */
+export const signupSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'メールアドレスは必須です')
+    .email('有効なメールアドレスを入力してください')
+    .transform((val) => val.trim()),
+  password: z
+    .string()
+    .min(1, 'パスワードは必須です')
+    .min(8, 'パスワードは8文字以上で入力してください')
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      'パスワードには小文字、大文字、数字を含めてください'
+    ),
+  confirmPassword: z
+    .string()
+    .min(1, 'パスワード確認は必須です')
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'パスワードが一致しません',
+  path: ['confirmPassword']
+})
+
+/**
+ * ID系のバリデーションスキーマ
+ */
+export const idSchema = z
+  .string()
+  .min(1, 'IDは必須です')
+  .uuid('無効なID形式です')
+
 // 型定義をエクスポート
 export type CategoryFormData = z.infer<typeof categorySchema>
 export type ProductFormData = z.infer<typeof productSchema>
 export type CheckFormData = z.infer<typeof checkSchema>
 export type UserProfileFormData = z.infer<typeof userProfileSchema>
+export type LoginFormData = z.infer<typeof loginSchema>
+export type SignupFormData = z.infer<typeof signupSchema>
