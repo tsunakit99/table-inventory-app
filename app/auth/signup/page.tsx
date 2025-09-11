@@ -1,4 +1,4 @@
-import { signUp } from '@/app/actions/auth'
+import { signUp } from '@/actions/auth'
 
 export default function SignUpPage() {
   return (

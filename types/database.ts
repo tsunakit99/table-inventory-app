@@ -1,5 +1,6 @@
 export type CheckStatus = 'NONE' | 'YELLOW' | 'RED'
 export type ActionType = 'CHECK_YELLOW' | 'CHECK_RED' | 'UNCHECK'
+export type CompletionStatus = 'PENDING' | 'COMPLETED'
 
 export interface Category {
   id: string
@@ -23,6 +24,10 @@ export interface CheckHistory {
   action_type: ActionType
   quantity?: number | null
   note?: string | null
+  user_id: string
+  status: CompletionStatus
+  completed_by?: string | null
+  completed_at?: string | null
   created_at: string
 }
 
@@ -60,6 +65,8 @@ export interface CreateCheckHistoryData {
   action_type: ActionType
   quantity?: number
   note?: string
+  user_id: string
+  status?: CompletionStatus
 }
 
 // Database schema type for Supabase client
@@ -91,6 +98,7 @@ export interface Database {
     Enums: {
       check_status: CheckStatus
       action_type: ActionType
+      completion_status: CompletionStatus
     }
   }
 }

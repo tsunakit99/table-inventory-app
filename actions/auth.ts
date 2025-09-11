@@ -9,6 +9,11 @@ export async function signUp(formData: FormData) {
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
+    options: {
+      data: {
+        display_name: 'unknown'
+      }
+    }
   }
 
   const { error } = await supabase.auth.signUp(data)
@@ -43,8 +48,3 @@ export async function signOut() {
   redirect('/auth/login')
 }
 
-export async function getUser() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
