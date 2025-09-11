@@ -29,12 +29,8 @@ interface Data {
 
 interface InventoryContentProps {
   data: Data
-  searchQuery: string
-  onSearchQuery: (query: string) => void
   selectedCategoryId: string
   onSelectedCategoryId: (id: string) => void
-  statusFilters: CheckStatus[]
-  onStatusFilters: (filters: CheckStatus[]) => void
   categories: Category[]
   onCategories: (categories: Category[]) => void
   onRefreshData: () => Promise<void>
@@ -43,21 +39,40 @@ interface InventoryContentProps {
 
 export const InventoryContent = memo(function InventoryContent({
   data,
-  onSearchQuery,
   selectedCategoryId,
   onSelectedCategoryId,
-  onStatusFilters,
   categories,
   onCategories,
   onRefreshData,
   isPending
-}: Omit<InventoryContentProps, 'searchQuery' | 'statusFilters'>) {
+}: InventoryContentProps) {
   // データを直接使用
-  const { products } = data.products
+  const { products: allProducts } = data.products
   const notifications = data.notifications
   
   // ユーザー情報状態
   const [user, setUser] = useState<User | null>(null)
+  
+  // 検索・フィルター状態
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilters, setStatusFilters] = useState<CheckStatus[]>([])
+
+  // 検索・フィルター適用後の商品リスト
+  const filteredProducts = useMemo(() => {
+    return allProducts.filter(product => {
+      // 検索クエリフィルター
+      if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false
+      }
+      
+      // ステータスフィルター
+      if (statusFilters.length > 0 && !statusFilters.includes(product.check_status)) {
+        return false
+      }
+      
+      return true
+    })
+  }, [allProducts, searchQuery, statusFilters])
   
   // ユーザー情報を取得
   useEffect(() => {
@@ -123,12 +138,12 @@ export const InventoryContent = memo(function InventoryContent({
 
   // チェックボタンクリック
   const handleCheckClick = useCallback((productId: string) => {
-    const product = products.find(p => p.id === productId)
+    const product = allProducts.find(p => p.id === productId)
     if (product) {
       setSelectedProduct(product)
       setIsCheckModalOpen(true)
     }
-  }, [products])
+  }, [allProducts])
 
   // チェック状態更新
   const handleCheckSubmit = useCallback(async (data: {
@@ -158,12 +173,12 @@ export const InventoryContent = memo(function InventoryContent({
 
   // 商品削除
   const handleDeleteClick = useCallback((productId: string) => {
-    const product = products.find(p => p.id === productId)
+    const product = allProducts.find(p => p.id === productId)
     if (product) {
       setProductToDelete(product)
       setIsDeleteModalOpen(true)
     }
-  }, [products])
+  }, [allProducts])
 
   const handleDeleteConfirm = useCallback(async () => {
     if (productToDelete) {
@@ -210,8 +225,8 @@ export const InventoryContent = memo(function InventoryContent({
         <div className="px-4 pt-4">
           <SearchBar 
             placeholder="商品名で検索..."
-            onSearch={onSearchQuery}
-            onFilterChange={onStatusFilters}
+            onSearch={setSearchQuery}
+            onFilterChange={setStatusFilters}
           />
         </div>
 
@@ -229,7 +244,7 @@ export const InventoryContent = memo(function InventoryContent({
         {/* 商品リスト */}
         <div className={isPending ? 'opacity-50 pointer-events-none' : ''}>
           <ProductList
-            products={products}
+            products={filteredProducts}
             onCheckClick={handleCheckClick}
             onDeleteClick={handleDeleteClick}
           />

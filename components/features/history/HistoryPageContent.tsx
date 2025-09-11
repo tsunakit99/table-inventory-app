@@ -11,7 +11,7 @@ import { getInitials } from '@/lib/utils/user'
 import { cn } from '@/lib/utils/tailwind'
 import { CheckHistoryItem } from '@/types/history'
 import { NotificationSummary } from '@/types/notifications'
-import { completeCheckHistory, getCheckHistory } from '@/actions/history'
+import { getCheckHistory } from '@/actions/history'
 import { getNotificationSummary } from '@/actions/notifications'
 import { getUser } from '@/actions/users'
 import { HistoryDetailModal } from './HistoryDetailModal'
@@ -28,8 +28,6 @@ const NotificationItem = memo(function NotificationItem({
   isLast 
 }: {
   item: CheckHistoryItem
-  showCompleteButton: boolean
-  onComplete?: (id: string) => void
   onItemClick?: (item: CheckHistoryItem) => void
   isLast: boolean
 }) {
@@ -158,16 +156,6 @@ export function HistoryPageContent({ initialCheckHistory, initialNotifications }
     }
   }, [])
 
-  const handleComplete = useCallback(async (historyId: string) => {
-    try {
-      await completeCheckHistory(historyId)
-      await refreshData()
-    } catch (error: unknown) {
-      console.error('Failed to complete history:', error)
-      const message = error instanceof Error ? error.message : '完了処理に失敗しました'
-      alert(message)
-    }
-  }, [refreshData])
 
   const handleTabChange = useCallback((value: string) => {
     setActiveTab(value as 'pending' | 'completed')
@@ -239,8 +227,6 @@ export function HistoryPageContent({ initialCheckHistory, initialNotifications }
                       <NotificationItem
                         key={item.id}
                         item={item}
-                        showCompleteButton={true}
-                        onComplete={handleComplete}
                         onItemClick={handleItemClick}
                         isLast={index === sortedPending.length - 1}
                       />
@@ -266,7 +252,6 @@ export function HistoryPageContent({ initialCheckHistory, initialNotifications }
                       <NotificationItem
                         key={item.id}
                         item={item}
-                        showCompleteButton={false}
                         onItemClick={handleItemClick}
                         isLast={index === sortedCompleted.length - 1}
                       />

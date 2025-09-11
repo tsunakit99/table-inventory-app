@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { LONG_PRESS_DURATION } from '@/lib/constants/timing'
+import { LONG_PRESS_DURATION, TOUCH_MOVE_THRESHOLD } from '@/lib/constants/timing'
 
 interface UseLongPressOptions {
   onLongPress: () => void
@@ -77,10 +77,9 @@ export function useLongPress({
     const touch = e.touches[0]
     const deltaX = Math.abs(touch.clientX - touchStartPositionRef.current.x)
     const deltaY = Math.abs(touch.clientY - touchStartPositionRef.current.y)
-    const moveThreshold = 10 // px
     
     // 指が大きく動いた場合は長押しをキャンセル
-    if (deltaX > moveThreshold || deltaY > moveThreshold) {
+    if (deltaX > TOUCH_MOVE_THRESHOLD || deltaY > TOUCH_MOVE_THRESHOLD) {
       clearTimer()
     }
   }, [clearTimer])
