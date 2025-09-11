@@ -5,13 +5,26 @@ import { revalidatePath } from 'next/cache'
 import { ProductCreateRequest, ProductInsert, Product } from '@/types/products'
 import { SearchFilters, FilteredProductsResult } from '@/types/search'
 import { logWarning } from '@/lib/utils/error-handler'
+import { productSchema } from '@/lib/validations/forms'
 
 export async function addProduct(productData: ProductCreateRequest): Promise<void> {
   const supabase = await createClient()
 
-  const insertData: ProductInsert = {
+  // サーバーサイドバリデーション
+  const validation = productSchema.safeParse({
     name: productData.name,
-    category_id: productData.categoryId,
+    categoryId: productData.categoryId
+  })
+  if (!validation.success) {
+    const errorMessage = validation.error.issues.map(issue => issue.message).join(', ')
+    logWarning(validation.error, 'product-validation', 'Server-side validation failed')
+    throw new Error(errorMessage)
+  }
+
+  const validatedData = validation.data
+  const insertData: ProductInsert = {
+    name: validatedData.name,
+    category_id: validatedData.categoryId,
     check_status: 'NONE'
   }
   const { error } = await supabase

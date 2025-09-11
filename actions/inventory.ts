@@ -9,6 +9,7 @@ import { getUser } from '@/actions/users'
 import { HISTORY_SEARCH_LIMIT } from '@/lib/constants/timing'
 import { revalidatePath } from 'next/cache'
 import { logWarning } from '@/lib/utils/error-handler'
+import { checkSchema } from '@/lib/validations/forms'
 
 export async function updateProductCheck(
   productId: string, 
@@ -22,9 +23,19 @@ export async function updateProductCheck(
     throw new Error('認証が必要です')
   }
 
+  // サーバーサイドバリデーション
+  const validation = checkSchema.safeParse(data)
+  if (!validation.success) {
+    const errorMessage = validation.error.issues.map(issue => issue.message).join(', ')
+    logWarning(validation.error, 'check-validation', 'Server-side validation failed')
+    throw new Error(errorMessage)
+  }
+
+  const validatedData = validation.data
+
   // 商品のチェックステータスを更新
   const updateData: ProductUpdate = { 
-    check_status: data.status 
+    check_status: validatedData.status 
   }
   const { error: updateError } = await supabase
     .from('products')
@@ -38,7 +49,7 @@ export async function updateProductCheck(
   }
 
   // 警告→緊急の昇格パターンの場合、前の履歴をチェック
-  if (data.status === 'RED') {
+  if (validatedData.status === 'RED') {
     const { data: existingHistory } = await supabase
       .from('check_history')
       .select('*')
@@ -59,23 +70,20 @@ export async function updateProductCheck(
 
   // チェック履歴を追加
   let actionType: ActionType
-  switch (data.status) {
+  switch (validatedData.status) {
     case 'YELLOW':
       actionType = 'CHECK_YELLOW'
       break
     case 'RED':
       actionType = 'CHECK_RED'
       break
-    case 'NONE':
-      actionType = 'UNCHECK'
-      break
   }
 
   const historyData: CheckHistoryInsert = {
     product_id: productId,
     action_type: actionType,
-    quantity: data.quantity || null,
-    note: data.note || null,
+    quantity: validatedData.quantity || null,
+    note: validatedData.note || null,
     user_id: user.id,
     status: 'PENDING'
   }

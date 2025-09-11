@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { User } from '@supabase/supabase-js'
 import { logWarning } from '@/lib/utils/error-handler'
+import { userProfileSchema } from '@/lib/validations/forms'
 
 /**
  * 現在認証されているユーザーを取得する
@@ -22,8 +23,18 @@ export async function getUser() {
 export async function updateDisplayName(displayName: string) {
   const supabase = await createClient()
   
+  // サーバーサイドバリデーション
+  const validation = userProfileSchema.safeParse({ displayName })
+  if (!validation.success) {
+    const errorMessage = validation.error.issues.map(issue => issue.message).join(', ')
+    logWarning(validation.error, 'profile-validation', 'Server-side validation failed')
+    throw new Error(errorMessage)
+  }
+
+  const validatedData = validation.data
+  
   const { error } = await supabase.auth.updateUser({
-    data: { display_name: displayName }
+    data: { display_name: validatedData.displayName }
   })
   
   if (error) {
