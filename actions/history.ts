@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { CheckHistoryItem, CheckHistoryWithRelations } from '@/types/history'
 import { getUser } from '@/actions/users'
-import { getUserDisplayName } from '@/actions/users'
+import { getUserInfos } from '@/actions/users'
 import { COMPLETED_HISTORY_LIMIT } from '@/lib/constants/timing'
 import { revalidatePath } from 'next/cache'
 
@@ -49,31 +49,40 @@ export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
   // 両方のデータを結合
   const allData = [...(pendingData || []), ...(completedData || [])] as CheckHistoryWithRelations[]
 
-  // データ変換（ユーザー名は必要時に個別取得）
-  const checkHistory: CheckHistoryItem[] = await Promise.all(
-    allData.map(async (item: CheckHistoryWithRelations) => {
-      const [checkerName, completerName] = await Promise.all([
-        getUserDisplayName(item.user_id),
-        item.completed_by ? getUserDisplayName(item.completed_by) : Promise.resolve(undefined)
-      ])
+  // 全ユーザーIDを収集してユーザー情報を一括取得
+  const userIds: string[] = []
+  allData.forEach(item => {
+    userIds.push(item.user_id)
+    if (item.completed_by) {
+      userIds.push(item.completed_by)
+    }
+  })
+  
+  const userInfoMap = await getUserInfos(userIds)
 
-      return {
-        id: item.id,
-        productName: item.product.name,
-        status: item.action_type === 'CHECK_YELLOW' ? 'YELLOW' : 
-                item.action_type === 'CHECK_RED' ? 'RED' : 'NONE',
-        checkedAt: new Date(item.created_at),
-        quantity: item.quantity || undefined,
-        note: item.note || undefined,
-        userId: item.user_id,
-        checkerName,
-        completionStatus: item.status,
-        completedBy: item.completed_by || undefined,
-        completerName,
-        completedAt: item.completed_at ? new Date(item.completed_at) : undefined
-      }
-    })
-  )
+  // データ変換
+  const checkHistory: CheckHistoryItem[] = allData.map((item: CheckHistoryWithRelations) => {
+    const checkerInfo = userInfoMap.get(item.user_id)
+    const completerInfo = item.completed_by ? userInfoMap.get(item.completed_by) : undefined
+
+    return {
+      id: item.id,
+      productName: item.product.name,
+      status: item.action_type === 'CHECK_YELLOW' ? 'YELLOW' : 
+              item.action_type === 'CHECK_RED' ? 'RED' : 'NONE',
+      checkedAt: new Date(item.created_at),
+      quantity: item.quantity || undefined,
+      note: item.note || undefined,
+      userId: item.user_id,
+      checkerName: checkerInfo?.name,
+      checkerAvatarUrl: checkerInfo?.avatarUrl,
+      completionStatus: item.status,
+      completedBy: item.completed_by || undefined,
+      completerName: completerInfo?.name,
+      completerAvatarUrl: completerInfo?.avatarUrl,
+      completedAt: item.completed_at ? new Date(item.completed_at) : undefined
+    }
+  })
 
   return checkHistory
 }
