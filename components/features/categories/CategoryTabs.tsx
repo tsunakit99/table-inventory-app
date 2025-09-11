@@ -84,6 +84,23 @@ const CategoryButton = memo(function CategoryButton({
     )
   }
 
+  // 「すべて」カテゴリは直接クリックハンドラーを使用
+  if (category === 'all') {
+    return (
+      <Button
+        variant={isSelected ? "default" : "secondary"}
+        size="sm"
+        onClick={onClick}
+        className={cn(
+          "rounded-full whitespace-nowrap transition-all",
+          isSelected ? "bg-[#0C1E7D] text-white hover:opacity-80" : ""
+        )}
+      >
+        すべて
+      </Button>
+    )
+  }
+
   return (
     <Button
       variant={isSelected ? "default" : "secondary"}
@@ -95,7 +112,7 @@ const CategoryButton = memo(function CategoryButton({
         longPress.isPressed && "opacity-70 scale-95" // 押下状態の視覚的フィードバック
       )}
     >
-      {category === 'all' ? 'すべて' : category.name}
+      {category.name}
     </Button>
   )
 })
