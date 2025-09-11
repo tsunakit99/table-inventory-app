@@ -119,7 +119,6 @@ const NoteTextarea = memo(function NoteTextarea({
 export const CheckModal = memo(function CheckModal({
   isOpen,
   productName,
-  currentStatus,
   onClose,
   onSubmit
 }: CheckModalProps) {
