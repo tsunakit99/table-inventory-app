@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Dialog,
   DialogContent,
@@ -12,11 +13,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { categorySchema, CategoryFormData } from '@/lib/validations/forms'
+import { handleFormError } from '@/lib/utils/error-handler'
 
 interface AddCategoryModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (categoryName: string) => void
+  onSubmit: (categoryName: string) => Promise<void>
 }
 
 export function AddCategoryModal({
@@ -24,19 +27,31 @@ export function AddCategoryModal({
   onClose,
   onSubmit
 }: AddCategoryModalProps) {
-  const [categoryName, setCategoryName] = useState('')
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    setError
+  } = useForm<CategoryFormData>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: ''
+    }
+  })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (categoryName.trim()) {
-      onSubmit(categoryName.trim())
-      setCategoryName('')
+  const onFormSubmit = async (data: CategoryFormData) => {
+    try {
+      await onSubmit(data.name)
+      reset()
       onClose()
+    } catch (error) {
+      handleFormError(error, 'category-add', setError)
     }
   }
 
   const handleClose = () => {
-    setCategoryName('')
+    reset()
     onClose()
   }
 
@@ -50,19 +65,25 @@ export function AddCategoryModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
           <div>
-            <Label htmlFor="categoryName">カテゴリ名</Label>
+            <Label htmlFor="name">カテゴリ名</Label>
             <Input
-              id="categoryName"
-              name="categoryName"
-              value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
+              id="name"
+              {...register('name')}
               placeholder="例：ソフトドリンク"
               className="mt-2"
               autoFocus
+              aria-invalid={errors.name ? 'true' : 'false'}
             />
+            {errors.name && (
+              <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
+            )}
           </div>
+
+          {errors.root && (
+            <p className="text-sm text-red-500">{errors.root.message}</p>
+          )}
 
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={handleClose}>
@@ -70,9 +91,9 @@ export function AddCategoryModal({
             </Button>
             <Button 
               type="submit" 
-              disabled={!categoryName.trim()}
+              disabled={isSubmitting}
             >
-              追加
+              {isSubmitting ? '追加中...' : '追加'}
             </Button>
           </DialogFooter>
         </form>

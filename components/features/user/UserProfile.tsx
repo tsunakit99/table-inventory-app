@@ -13,6 +13,7 @@ import { uploadAvatar } from '@/actions/storage'
 import { getInitials } from '@/lib/utils/user'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { handleError } from '@/lib/utils/error-handler'
 
 interface UserProfileProps {
   user: User
@@ -36,8 +37,7 @@ export function UserProfile({ user }: UserProfileProps) {
         setIsEditingName(false)
         router.refresh()
       } catch (error) {
-        console.error('Display name update failed:', error)
-        alert('表示名の更新に失敗しました')
+        handleError(error, 'user-profile-update')
       }
     })
   }
@@ -62,8 +62,7 @@ export function UserProfile({ user }: UserProfileProps) {
         setAvatarUrl(publicUrl)
         router.refresh()
       } catch (error) {
-        console.error('Avatar upload failed:', error)
-        alert('画像のアップロードに失敗しました')
+        handleError(error, 'avatar-upload')
       }
     })
   }
