@@ -1,18 +1,21 @@
 'use client'
 
-import { useState } from 'react'
-import * as React from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useEffect } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Category } from '@/types/categories'
+import { productSchema, ProductFormData } from '@/lib/validations/forms'
+import { handleFormError, showSuccess } from '@/lib/utils/error-handler'
 
 interface AddProductModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (productData: { name: string; categoryId: string }) => void
+  onSubmit: (productData: { name: string; categoryId: string }) => Promise<void>
   categories: Category[]
   selectedCategoryId?: string
 }
@@ -24,34 +27,47 @@ export function AddProductModal({
   categories,
   selectedCategoryId
 }: AddProductModalProps) {
-  const [name, setName] = useState('')
-  const [categoryId, setCategoryId] = useState(selectedCategoryId || '')
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+    reset,
+    setError,
+    setValue
+  } = useForm<ProductFormData>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      name: '',
+      categoryId: selectedCategoryId || ''
+    }
+  })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (name.trim() && categoryId) {
-      onSubmit({
-        name: name.trim(),
-        categoryId
+  const onFormSubmit = async (data: ProductFormData) => {
+    try {
+      await onSubmit({
+        name: data.name,
+        categoryId: data.categoryId
       })
-      setName('')
-      setCategoryId('')
+      showSuccess('商品を追加しました')
+      reset()
       onClose()
+    } catch (error) {
+      handleFormError(error, 'product-add', setError)
     }
   }
 
   const handleClose = () => {
-    setName('')
-    setCategoryId(selectedCategoryId || '')
+    reset()
     onClose()
   }
 
   // selectedCategoryIdが変わったときにcategoryIdも更新
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedCategoryId) {
-      setCategoryId(selectedCategoryId)
+      setValue('categoryId', selectedCategoryId)
     }
-  }, [selectedCategoryId])
+  }, [selectedCategoryId, setValue])
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -60,50 +76,61 @@ export function AddProductModal({
           <DialogTitle>商品を追加</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="product-name">商品名</Label>
+            <Label htmlFor="name">商品名</Label>
             <Input
-              id="product-name"
-              name="productName"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              id="name"
+              {...register('name')}
               placeholder="商品名を入力してください"
-              required
+              aria-invalid={errors.name ? 'true' : 'false'}
             />
+            {errors.name && (
+              <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
+            )}
           </div>
           
           <div className="space-y-2">
-          <Label id="product-category-label">カテゴリ</Label>
-          <Select
-          value={categoryId}
-          onValueChange={setCategoryId}
-          required
-          aria-labelledby="product-category-label"
-          name="categoryId"
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="カテゴリを選択してください" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
+            <Label htmlFor="categoryId">カテゴリ</Label>
+            <Controller
+              name="categoryId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  aria-invalid={errors.categoryId ? 'true' : 'false'}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="カテゴリを選択してください" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.categoryId && (
+              <p className="text-sm text-red-500 mt-1">{errors.categoryId.message}</p>
+            )}
           </div>
+
+          {errors.root && (
+            <p className="text-sm text-red-500">{errors.root.message}</p>
+          )}
           
-          <div className="flex justify-end gap-2 pt-4">
+          <DialogFooter className="gap-2 pt-4">
             <Button type="button" variant="outline" onClick={handleClose}>
               キャンセル
             </Button>
-            <Button type="submit">
-              追加
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? '追加中...' : '追加'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

@@ -4,13 +4,27 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { ProductCreateRequest, ProductInsert, Product } from '@/types/products'
 import { SearchFilters, FilteredProductsResult } from '@/types/search'
+import { logWarning } from '@/lib/utils/error-handler'
+import { productSchema } from '@/lib/validations/forms'
 
 export async function addProduct(productData: ProductCreateRequest): Promise<void> {
   const supabase = await createClient()
 
-  const insertData: ProductInsert = {
+  // サーバーサイドバリデーション
+  const validation = productSchema.safeParse({
     name: productData.name,
-    category_id: productData.categoryId,
+    categoryId: productData.categoryId
+  })
+  if (!validation.success) {
+    const errorMessage = validation.error.issues.map(issue => issue.message).join(', ')
+    logWarning(validation.error, 'product-validation', 'Server-side validation failed')
+    throw new Error(errorMessage)
+  }
+
+  const validatedData = validation.data
+  const insertData: ProductInsert = {
+    name: validatedData.name,
+    category_id: validatedData.categoryId,
     check_status: 'NONE'
   }
   const { error } = await supabase
@@ -19,7 +33,7 @@ export async function addProduct(productData: ProductCreateRequest): Promise<voi
     .insert(insertData)
 
   if (error) {
-    console.error('Product creation error:', error)
+    logWarning(error, 'product-create-db', 'Product creation error')
     throw new Error('商品の作成に失敗しました')
   }
 
@@ -35,7 +49,7 @@ export async function deleteProduct(productId: string): Promise<void> {
     .eq('id', productId)
 
   if (error) {
-    console.error('Product deletion error:', error)
+    logWarning(error, 'product-delete-db', 'Product deletion error')
     throw new Error('商品の削除に失敗しました')
   }
 
@@ -51,7 +65,7 @@ export async function getProducts(): Promise<Product[]> {
     .order('name')
 
   if (error) {
-    console.error('Products fetch error:', error)
+    logWarning(error, 'products-fetch-db', 'Products fetch error')
     throw new Error('商品の取得に失敗しました')
   }
 
@@ -84,7 +98,7 @@ export async function getFilteredProducts(filters: SearchFilters): Promise<Filte
   const { data, error, count } = await supabaseQuery
 
   if (error) {
-    console.error('Products search error:', error)
+    logWarning(error, 'products-search-db', 'Products search error')
     throw new Error('商品の検索に失敗しました')
   }
 

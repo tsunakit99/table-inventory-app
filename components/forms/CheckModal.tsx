@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useCallback, memo } from 'react'
+import { memo } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertTriangle, AlertCircle } from 'lucide-react'
 import {
   Dialog,
@@ -16,6 +18,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils/tailwind'
 import { CheckStatus } from '@/types/database'
+import { checkSchema, CheckFormData } from '@/lib/validations/forms'
+import { handleFormError, showSuccess } from '@/lib/utils/error-handler'
 
 interface CheckModalProps {
   isOpen: boolean
@@ -26,7 +30,7 @@ interface CheckModalProps {
     status: 'YELLOW' | 'RED'
     quantity?: number
     note?: string
-  }) => void
+  }) => Promise<void>
 }
 
 const StatusButton = memo(function StatusButton({ 
@@ -69,52 +73,6 @@ const StatusButton = memo(function StatusButton({
   )
 })
 
-const QuantityInput = memo(function QuantityInput({ 
-  value, 
-  onChange 
-}: { 
-  value: string, 
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void 
-}) {
-  return (
-    <div>
-      <Label htmlFor="quantity">現在の個数（任意）</Label>
-      <Input
-        type="number"
-        id="quantity"
-        name="quantity"
-        value={value}
-        onChange={onChange}
-        min="0"
-        placeholder="個数を入力"
-        className="mt-2"
-      />
-    </div>
-  )
-})
-
-const NoteTextarea = memo(function NoteTextarea({ 
-  value, 
-  onChange 
-}: { 
-  value: string, 
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void 
-}) {
-  return (
-    <div>
-      <Label htmlFor="note">備考（任意）</Label>
-      <Textarea
-        id="note"
-        name="note"
-        value={value}
-        onChange={onChange}
-        rows={3}
-        placeholder="詳細な状況を記録..."
-        className="mt-2 resize-none"
-      />
-    </div>
-  )
-})
 
 export const CheckModal = memo(function CheckModal({
   isOpen,
@@ -122,41 +80,48 @@ export const CheckModal = memo(function CheckModal({
   onClose,
   onSubmit
 }: CheckModalProps) {
-  const [selectedStatus, setSelectedStatus] = useState<'YELLOW' | 'RED'>('YELLOW')
-  const [quantity, setQuantity] = useState<string>('')
-  const [note, setNote] = useState('')
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+    reset,
+    setError
+  } = useForm({
+    resolver: zodResolver(checkSchema),
+    defaultValues: {
+      status: 'YELLOW' as const,
+      quantity: '',
+      note: ''
+    }
+  })
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit({
-      status: selectedStatus,
-      quantity: quantity ? parseInt(quantity) : undefined,
-      note: note.trim() || undefined
-    })
-    // リセット
-    setQuantity('')
-    setNote('')
-  }, [selectedStatus, quantity, note, onSubmit])
+  const onFormSubmit = async (data: CheckFormData) => {
+    try {
+      await onSubmit({
+        status: data.status,
+        quantity: data.quantity,
+        note: data.note
+      })
+      showSuccess('在庫情報を登録しました')
+      reset()
+      onClose()
+    } catch (error) {
+      handleFormError(error, 'check-submit', setError)
+    }
+  }
 
-  const handleClose = useCallback(() => {
-    setQuantity('')
-    setNote('')
+  const handleClose = () => {
+    reset()
     onClose()
-  }, [onClose])
+  }
 
-  const handleOpenChange = useCallback((open: boolean) => {
+  const handleOpenChange = (open: boolean) => {
     if (!open) {
       handleClose()
     }
-  }, [handleClose])
+  }
 
-  const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuantity(e.target.value)
-  }, [])
-
-  const handleNoteChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNote(e.target.value)
-  }, [])
 
 
   return (
@@ -169,34 +134,76 @@ export const CheckModal = memo(function CheckModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
           {/* チェック状態選択 */}
           <fieldset>
             <legend className="text-base font-medium">チェック状態</legend>
             <div className="grid grid-cols-2 gap-3 mt-3">
-              {(['YELLOW', 'RED'] as const).map((status) => (
-                <StatusButton
-                  key={status}
-                  status={status}
-                  isSelected={selectedStatus === status}
-                  onClick={() => setSelectedStatus(status)}
-                />
-              ))}
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <>
+                    {(['YELLOW', 'RED'] as const).map((status) => (
+                      <StatusButton
+                        key={status}
+                        status={status}
+                        isSelected={field.value === status}
+                        onClick={() => field.onChange(status)}
+                      />
+                    ))}
+                  </>
+                )}
+              />
             </div>
+            {errors.status && (
+              <p className="text-sm text-red-500 mt-1">{errors.status.message}</p>
+            )}
           </fieldset>
 
           {/* 個数入力 */}
-          <QuantityInput value={quantity} onChange={handleQuantityChange} />
+          <div>
+            <Label htmlFor="quantity">現在の個数（任意）</Label>
+            <Input
+              type="number"
+              id="quantity"
+              {...register('quantity')}
+              min="0"
+              placeholder="個数を入力"
+              className="mt-2"
+              aria-invalid={errors.quantity ? 'true' : 'false'}
+            />
+            {errors.quantity && (
+              <p className="text-sm text-red-500 mt-1">{errors.quantity.message}</p>
+            )}
+          </div>
 
           {/* 備考入力 */}
-          <NoteTextarea value={note} onChange={handleNoteChange} />
+          <div>
+            <Label htmlFor="note">備考（任意）</Label>
+            <Textarea
+              id="note"
+              {...register('note')}
+              rows={3}
+              placeholder="詳細な状況を記録..."
+              className="mt-2 resize-none"
+              aria-invalid={errors.note ? 'true' : 'false'}
+            />
+            {errors.note && (
+              <p className="text-sm text-red-500 mt-1">{errors.note.message}</p>
+            )}
+          </div>
+
+          {errors.root && (
+            <p className="text-sm text-red-500">{errors.root.message}</p>
+          )}
 
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={handleClose}>
               キャンセル
             </Button>
-            <Button type="submit">
-              登録
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? '登録中...' : '登録'}
             </Button>
           </DialogFooter>
         </form>

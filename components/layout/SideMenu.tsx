@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils/tailwind'
 import { getInitials } from '@/lib/utils/user'
 import { signOut } from '@/actions/auth'
 import { useRouter } from 'next/navigation'
+import { handleError } from '@/lib/utils/error-handler'
 
 interface SideMenuProps {
   isOpen: boolean
@@ -42,7 +43,14 @@ export const SideMenu = memo(function SideMenu({
       await signOut()
       onClose()
     } catch (error) {
-      console.error('Logout failed:', error)
+      // Next.jsのredirect()はエラーを投げてナビゲーションするため、
+      // NEXT_REDIRECTエラーの場合は正常な処理として扱う
+      if (error && typeof error === 'object' && 'digest' in error && 
+          typeof error.digest === 'string' && error.digest.includes('NEXT_REDIRECT')) {
+        onClose()
+        return
+      }
+      handleError(error, 'logout')
     }
   }, [onClose])
 

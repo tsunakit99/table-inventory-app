@@ -1,63 +1,113 @@
+'use client'
+
+import Image from 'next/image'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { signIn } from '@/actions/auth'
+import { loginSchema, LoginFormData } from '@/lib/validations/forms'
+import { handleFormError } from '@/lib/utils/error-handler'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export default function LoginPage() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: ''
+    }
+  })
+
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      const formData = new FormData()
+      formData.append('email', data.email)
+      formData.append('password', data.password)
+      await signIn(formData)
+    } catch (error) {
+      handleFormError(error, 'login', setError)
+    }
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0C1E7D' }}>
       <div className="max-w-md w-full space-y-8 p-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            在庫管理アプリ
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <Image
+                src="/tableicon.png"
+                alt="居食屋 たーぶる"
+                width={200}
+                height={50}
+                className="object-contain w-auto h-[90px] mx-auto mt-4"
+                priority
+              />
+          <p className="mt-10 text-center text-sm text-white">
             アカウントにログイン
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" action={signIn}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <Label htmlFor="email" className="block text-sm font-medium text-white">
                 メールアドレス
-              </label>
-              <input
+              </Label>
+              <Input
                 id="email"
-                name="email"
                 type="email"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                {...register('email')}
+                className="mt-1 text-white"
                 placeholder="your@email.com"
+                aria-invalid={errors.email ? 'true' : 'false'}
               />
+              {errors.email && (
+                <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+              )}
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <Label htmlFor="password" className="block text-sm font-medium text-white">
                 パスワード
-              </label>
-              <input
+              </Label>
+              <Input
                 id="password"
-                name="password"
                 type="password"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                {...register('password')}
+                className="mt-1 text-white"
                 placeholder="パスワード"
+                aria-invalid={errors.password ? 'true' : 'false'}
               />
+              {errors.password && (
+                <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
+              )}
             </div>
           </div>
 
+          {errors.root && (
+            <p className="text-sm text-red-500 text-center">{errors.root.message}</p>
+          )}
+
           <div>
-            <button
+            <Button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              disabled={isSubmitting}
+              className="w-full bg-black hover:bg-gray-700"
             >
-              ログイン
-            </button>
+              {isSubmitting ? 'ログイン中...' : 'ログイン'}
+            </Button>
           </div>
           
           <div className="text-center">
             <a 
               href="/auth/signup" 
-              className="text-indigo-600 hover:text-indigo-500 text-sm"
+              className="text-indigo-600 hover:text-indigo-500 text-sm text-white"
             >
-              アカウントを作成
+              アカウントを作成→
             </a>
           </div>
         </form>
