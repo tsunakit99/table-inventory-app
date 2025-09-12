@@ -82,7 +82,7 @@ export function HistoryDetailModal({
     
     try {
       setIsCompleting(true)
-      await completeCheckHistory(historyItem.id)
+      await completeCheckHistory(historyItem.id, historyItem.productId)
       await onRefreshData()
       showSuccess('在庫履歴を完了しました')
       onClose()
