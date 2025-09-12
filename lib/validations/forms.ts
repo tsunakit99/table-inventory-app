@@ -94,7 +94,7 @@ export const loginSchema = z.object({
   password: z
     .string()
     .min(1, 'パスワードは必須です')
-    .min(6, 'パスワードは8文字以上で入力してください')
+    .min(8, 'パスワードは8文字以上で入力してください')
 })
 
 /**
