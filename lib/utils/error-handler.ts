@@ -1,3 +1,5 @@
+import toast from 'react-hot-toast'
+
 export interface ErrorHandlerOptions {
   showUserMessage?: boolean
   logToConsole?: boolean
@@ -48,7 +50,7 @@ export function handleError(
 
   // Show user message if enabled
   if (showUserMessage) {
-    alert(displayMessage)
+    toast.error(displayMessage)
   }
 
   return displayMessage
@@ -99,5 +101,17 @@ export function logWarning(
     showUserMessage: false,
     logLevel: 'warn',
     userMessage: fallbackMessage
+  })
+}
+
+// For success notifications
+export function showSuccess(message: string): void {
+  toast.success(message)
+}
+
+// For info notifications
+export function showInfo(message: string): void {
+  toast(message, {
+    icon: 'ℹ️',
   })
 }
