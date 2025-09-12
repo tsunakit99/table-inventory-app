@@ -20,6 +20,7 @@ import { getUser } from '@/actions/users'
 import { CheckStatus } from '@/types/database'
 import { Plus } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
+import { handleError, logWarning, showSuccess } from '@/lib/utils/error-handler'
 
 interface Data {
   products: { products: Product[]; totalCount: number }
@@ -81,7 +82,7 @@ export const InventoryContent = memo(function InventoryContent({
         const userData = await getUser()
         setUser(userData)
       } catch (error) {
-        console.error('Failed to fetch user:', error)
+        logWarning(error, 'user-fetch', 'Failed to fetch user data')
       }
     }
     fetchUser()
@@ -182,10 +183,15 @@ export const InventoryContent = memo(function InventoryContent({
 
   const handleDeleteConfirm = useCallback(async () => {
     if (productToDelete) {
-      await deleteProduct(productToDelete.id)
-      setIsDeleteModalOpen(false)
-      setProductToDelete(null)
-      await onRefreshData()
+      try {
+        await deleteProduct(productToDelete.id)
+        setIsDeleteModalOpen(false)
+        setProductToDelete(null)
+        await onRefreshData()
+        showSuccess('商品を削除しました')
+      } catch (error) {
+        handleError(error, 'product-delete')
+      }
     }
   }, [productToDelete, onRefreshData])
 
@@ -204,10 +210,9 @@ export const InventoryContent = memo(function InventoryContent({
       onCategories(updatedCategories)
       
       await onRefreshData()
+      showSuccess('カテゴリを削除しました')
     } catch (error: unknown) {
-      console.error('Failed to delete category:', error)
-      const message = error instanceof Error ? error.message : 'カテゴリの削除に失敗しました'
-      alert(message)
+      handleError(error, 'category-delete')
     }
   }, [categories, selectedCategoryId, onCategories, onSelectedCategoryId, onRefreshData])
 

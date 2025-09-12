@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { User } from '@supabase/supabase-js'
+import { logWarning } from '@/lib/utils/error-handler'
+import { userProfileSchema } from '@/lib/validations/forms'
 
 /**
  * 現在認証されているユーザーを取得する
@@ -21,8 +23,18 @@ export async function getUser() {
 export async function updateDisplayName(displayName: string) {
   const supabase = await createClient()
   
+  // サーバーサイドバリデーション
+  const validation = userProfileSchema.safeParse({ displayName })
+  if (!validation.success) {
+    const errorMessage = validation.error.issues.map(issue => issue.message).join(', ')
+    logWarning(validation.error, 'profile-validation', 'Server-side validation failed')
+    throw new Error(errorMessage)
+  }
+
+  const validatedData = validation.data
+  
   const { error } = await supabase.auth.updateUser({
-    data: { display_name: displayName }
+    data: { display_name: validatedData.displayName }
   })
   
   if (error) {
@@ -64,7 +76,7 @@ export async function getUserDisplayName(userId: string): Promise<string> {
     
     return data.user.user_metadata?.display_name || 'Unknown User'
   } catch (error) {
-    console.warn(`Error fetching user ${userId}:`, error)
+    logWarning(error, 'user-fetch', `Error fetching user ${userId}`)
     return 'Unknown User'
   }
 }
@@ -90,7 +102,7 @@ export async function getUserInfo(userId: string): Promise<{ name: string; avata
       avatarUrl: data.user.user_metadata?.avatar_url
     }
   } catch (error) {
-    console.warn(`Error fetching user ${userId}:`, error)
+    logWarning(error, 'user-fetch', `Error fetching user ${userId}`)
     return { name: 'Unknown User' }
   }
 }
@@ -158,7 +170,7 @@ export async function getUserInfos(userIds: string[]): Promise<Map<string, { nam
     })
     
   } catch (error) {
-    console.warn('Error in bulk user fetch, falling back to individual calls:', error)
+    logWarning(error, 'user-bulk-fetch', 'Error in bulk user fetch, falling back to individual calls')
     
     // フォールバック: 個別取得
     const promises = uniqueUserIds.map(async (userId) => {
