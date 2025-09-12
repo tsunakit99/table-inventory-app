@@ -113,5 +113,5 @@ export async function completeCheckHistory(historyId: string, productId: string)
   }
 
   // 特定のパスのみをrevalidate
-  revalidatePath('/', 'layout')
+  revalidatePath('/', 'page')
 }
