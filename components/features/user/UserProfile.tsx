@@ -13,7 +13,7 @@ import { uploadAvatar } from '@/actions/storage'
 import { getInitials } from '@/lib/utils/user'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { handleError } from '@/lib/utils/error-handler'
+import { handleError, showSuccess } from '@/lib/utils/error-handler'
 
 interface UserProfileProps {
   user: User
@@ -35,6 +35,7 @@ export function UserProfile({ user }: UserProfileProps) {
         await updateDisplayName(tempDisplayName)
         setDisplayName(tempDisplayName)
         setIsEditingName(false)
+        showSuccess('表示名を更新しました')
         router.refresh()
       } catch (error) {
         handleError(error, 'user-profile-update')
@@ -60,6 +61,7 @@ export function UserProfile({ user }: UserProfileProps) {
         await updateAvatar(publicUrl)
         
         setAvatarUrl(publicUrl)
+        showSuccess('アバター画像を更新しました')
         router.refresh()
       } catch (error) {
         handleError(error, 'avatar-upload')

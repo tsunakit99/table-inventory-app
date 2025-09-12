@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Category } from '@/types/categories'
 import { productSchema, ProductFormData } from '@/lib/validations/forms'
-import { handleFormError } from '@/lib/utils/error-handler'
+import { handleFormError, showSuccess } from '@/lib/utils/error-handler'
 
 interface AddProductModalProps {
   isOpen: boolean
@@ -49,6 +49,7 @@ export function AddProductModal({
         name: data.name,
         categoryId: data.categoryId
       })
+      showSuccess('商品を追加しました')
       reset()
       onClose()
     } catch (error) {

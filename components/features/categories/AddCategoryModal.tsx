@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { categorySchema, CategoryFormData } from '@/lib/validations/forms'
-import { handleFormError } from '@/lib/utils/error-handler'
+import { handleFormError, showSuccess } from '@/lib/utils/error-handler'
 
 interface AddCategoryModalProps {
   isOpen: boolean
@@ -43,6 +43,7 @@ export function AddCategoryModal({
   const onFormSubmit = async (data: CategoryFormData) => {
     try {
       await onSubmit(data.name)
+      showSuccess('カテゴリを追加しました')
       reset()
       onClose()
     } catch (error) {

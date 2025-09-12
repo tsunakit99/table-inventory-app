@@ -20,7 +20,7 @@ import { getUser } from '@/actions/users'
 import { CheckStatus } from '@/types/database'
 import { Plus } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
-import { handleError, logWarning } from '@/lib/utils/error-handler'
+import { handleError, logWarning, showSuccess } from '@/lib/utils/error-handler'
 
 interface Data {
   products: { products: Product[]; totalCount: number }
@@ -183,10 +183,15 @@ export const InventoryContent = memo(function InventoryContent({
 
   const handleDeleteConfirm = useCallback(async () => {
     if (productToDelete) {
-      await deleteProduct(productToDelete.id)
-      setIsDeleteModalOpen(false)
-      setProductToDelete(null)
-      await onRefreshData()
+      try {
+        await deleteProduct(productToDelete.id)
+        setIsDeleteModalOpen(false)
+        setProductToDelete(null)
+        await onRefreshData()
+        showSuccess('商品を削除しました')
+      } catch (error) {
+        handleError(error, 'product-delete')
+      }
     }
   }, [productToDelete, onRefreshData])
 
@@ -205,6 +210,7 @@ export const InventoryContent = memo(function InventoryContent({
       onCategories(updatedCategories)
       
       await onRefreshData()
+      showSuccess('カテゴリを削除しました')
     } catch (error: unknown) {
       handleError(error, 'category-delete')
     }

@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { CheckHistoryItem } from '@/types/history'
 import { completeCheckHistory } from '@/actions/history'
-import { handleError } from '@/lib/utils/error-handler'
+import { handleError, showSuccess } from '@/lib/utils/error-handler'
 
 interface HistoryDetailModalProps {
   isOpen: boolean
@@ -84,6 +84,7 @@ export function HistoryDetailModal({
       setIsCompleting(true)
       await completeCheckHistory(historyItem.id)
       await onRefreshData()
+      showSuccess('在庫履歴を完了しました')
       onClose()
     } catch (error) {
       handleError(error, 'history-complete')

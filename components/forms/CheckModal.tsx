@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils/tailwind'
 import { CheckStatus } from '@/types/database'
 import { checkSchema, CheckFormData } from '@/lib/validations/forms'
-import { handleFormError } from '@/lib/utils/error-handler'
+import { handleFormError, showSuccess } from '@/lib/utils/error-handler'
 
 interface CheckModalProps {
   isOpen: boolean
@@ -103,6 +103,7 @@ export const CheckModal = memo(function CheckModal({
         quantity: data.quantity,
         note: data.note
       })
+      showSuccess('在庫情報を登録しました')
       reset()
       onClose()
     } catch (error) {
