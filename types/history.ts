@@ -5,6 +5,7 @@ import { CheckStatus, ActionType, CompletionStatus } from './database'
 // チェック履歴項目の型（UI表示用）
 export interface CheckHistoryItem {
   id: string
+  productId: string
   productName: string
   status: CheckStatus
   checkedAt: Date

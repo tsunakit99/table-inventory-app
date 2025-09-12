@@ -16,7 +16,8 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { CheckHistoryItem } from '@/types/history'
 import { completeCheckHistory } from '@/actions/history'
-import { handleError, showSuccess } from '@/lib/utils/error-handler'
+import { handleError } from '@/lib/utils/error-handler'
+import { toast } from 'react-hot-toast'
 
 interface HistoryDetailModalProps {
   isOpen: boolean
@@ -80,13 +81,17 @@ export function HistoryDetailModal({
   const handleComplete = useCallback(async () => {
     if (!historyItem || historyItem.completionStatus === 'COMPLETED') return
     
+    onClose() // モーダルをすぐ閉じる
+    
+    const loadingToast = toast.loading('履歴を完了しています...')
+    
     try {
       setIsCompleting(true)
-      await completeCheckHistory(historyItem.id)
+      await completeCheckHistory(historyItem.id, historyItem.productId)
       await onRefreshData()
-      showSuccess('在庫履歴を完了しました')
-      onClose()
+      toast.success('在庫履歴を完了しました', { id: loadingToast })
     } catch (error) {
+      toast.error('履歴の完了処理に失敗しました', { id: loadingToast })
       handleError(error, 'history-complete')
     } finally {
       setIsCompleting(false)
