@@ -68,6 +68,7 @@ export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
 
     return {
       id: item.id,
+      productId: item.product_id,
       productName: item.product.name,
       status: item.action_type === 'CHECK_YELLOW' ? 'YELLOW' : 
               item.action_type === 'CHECK_RED' ? 'RED' : 'NONE',
@@ -88,7 +89,7 @@ export async function getCheckHistory(): Promise<CheckHistoryItem[]> {
   return checkHistory
 }
 
-export async function completeCheckHistory(historyId: string): Promise<void> {
+export async function completeCheckHistory(historyId: string, productId: string): Promise<void> {
   const supabase = await createClient()
   const user = await getUser()
   
@@ -96,45 +97,21 @@ export async function completeCheckHistory(historyId: string): Promise<void> {
     throw new Error('認証が必要です')
   }
 
-  // まず履歴レコードを取得して商品IDを特定
-  const { data: historyData, error: fetchError } = await supabase
-    .from('check_history')
-    .select('product_id')
-    .eq('id', historyId)
-    .single()
-
-  if (fetchError || !historyData) {
-    logWarning(fetchError, 'history-detail-fetch-db', 'History fetch error')
-    throw new Error('履歴の取得に失敗しました')
-  }
-
-  // 履歴の完了処理
-  const { error: updateError } = await supabase
-    .from('check_history')
-    // @ts-expect-error: Supabase type inference issue with complex types
-    .update({
-      status: 'COMPLETED',
-      completed_by: user.id,
-      completed_at: new Date().toISOString()
+  // RPC関数を使用してアトミックに処理
+  const { error } = await supabase
+    // @ts-expect-error: Supabase RPC function not in type definitions
+    .rpc('complete_check_history', {
+      history_id: historyId,
+      product_id: productId,
+      completed_by_user: user.id,
+      completed_at_time: new Date().toISOString()
     })
-    .eq('id', historyId)
 
-  if (updateError) {
-    logWarning(updateError, 'history-completion-db', 'Check history completion error')
+  if (error) {
+    logWarning(error, 'history-completion-rpc', 'Check history completion RPC error')
     throw new Error('履歴の完了処理に失敗しました')
   }
 
-  // 商品のステータスを正常に戻す
-  const { error: productUpdateError } = await supabase
-    .from('products')
-    // @ts-expect-error: Supabase type inference issue with complex types
-    .update({ check_status: 'NONE' })
-    .eq('id', (historyData as { product_id: string }).product_id)
-
-  if (productUpdateError) {
-    logWarning(productUpdateError, 'product-status-reset-db', 'Product status reset error')
-    throw new Error('商品ステータスのリセットに失敗しました')
-  }
-
-  revalidatePath('/')
+  // 特定のパスのみをrevalidate
+  revalidatePath('/', 'page')
 }

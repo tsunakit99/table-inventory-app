@@ -62,7 +62,7 @@ export const checkSchema = z.object({
     }),
   note: z
     .string()
-    .max(120, '備考は120文字以内で入力してください')
+    .max(50, '備考は50文字以内で入力してください')
     .optional()
     .transform((val) => val?.trim() || undefined)
 })
