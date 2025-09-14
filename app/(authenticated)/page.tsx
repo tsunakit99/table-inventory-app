@@ -15,7 +15,7 @@ export default async function Home() {
   ])
 
   return (
-    <InventoryHome 
+    <InventoryHome
       initialCategories={initialCategories}
       initialProducts={initialProducts}
       initialNotifications={initialNotifications}
