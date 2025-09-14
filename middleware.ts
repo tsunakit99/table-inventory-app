@@ -33,7 +33,8 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // 認証が必要なルート（認証されていない場合はログインページにリダイレクト）
-  if (!user && !request.nextUrl.pathname.startsWith('/auth')) {
+  // /api/send-email のみ認証をスキップ（Edge Functionからのメール送信用）
+  if (!user && !request.nextUrl.pathname.startsWith('/auth') && request.nextUrl.pathname !== '/api/send-email') {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
