@@ -12,18 +12,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 環境変数の検証
+    const smtpUser = process.env.SMTP_USER
+    const smtpPass = process.env.SMTP_PASS
+
+    if (!smtpUser || !smtpPass) {
+      console.error('SMTP credentials not configured')
+      return NextResponse.json(
+        { error: 'Email service not configured properly' },
+        { status: 500 }
+      )
+    }
+
     // Gmail SMTP設定
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.SMTP_USER, // tableinventoryapp@gmail.com
-        pass: process.env.SMTP_PASS, // アプリパスワード
+        user: smtpUser,
+        pass: smtpPass,
       },
     })
 
     // メール送信
     await transporter.sendMail({
-      from: `たーぷる在庫管理 <${process.env.SMTP_USER}>`,
+      from: `たーぷる在庫管理 <${smtpUser}>`,
       to,
       subject,
       text,

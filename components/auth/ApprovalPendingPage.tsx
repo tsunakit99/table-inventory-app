@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Clock, Mail, RefreshCw } from 'lucide-react'
@@ -13,6 +14,7 @@ interface ApprovalPendingPageProps {
 
 export function ApprovalPendingPage({ profile, onRefresh }: ApprovalPendingPageProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const router = useRouter()
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
@@ -33,7 +35,7 @@ export function ApprovalPendingPage({ profile, onRefresh }: ApprovalPendingPageP
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    window.location.href = '/auth'
+    router.push('/auth')
   }
 
   return (

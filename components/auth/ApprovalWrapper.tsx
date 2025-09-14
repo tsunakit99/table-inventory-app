@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { getProfile, Profile } from '@/actions/profiles'
 import { ApprovalPendingPage } from './ApprovalPendingPage'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -12,6 +13,7 @@ interface ApprovalWrapperProps {
 export function ApprovalWrapper({ children }: ApprovalWrapperProps) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   const fetchProfile = async () => {
     try {
@@ -42,8 +44,12 @@ export function ApprovalWrapper({ children }: ApprovalWrapperProps) {
 
   if (!profile) {
     // User not found, redirect to auth
-    window.location.href = '/auth'
-    return null
+    router.push('/auth')
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
   }
 
   if (!profile.is_approved) {
