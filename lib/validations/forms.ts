@@ -39,27 +39,11 @@ export const productSchema = z.object({
 export const checkSchema = z.object({
   status: z.enum(['YELLOW', 'RED'], { message: '無効なステータスです' }),
   quantity: z
-    .string()
-    .optional()
-    .refine((val) => {
-      if (!val || val === '') return true
-      const num = parseInt(val, 10)
-      return !isNaN(num)
-    }, '個数は数値で入力してください')
-    .refine((val) => {
-      if (!val || val === '') return true
-      const num = parseInt(val, 10)
-      return num >= 0
-    }, '個数は0以上で入力してください')
-    .refine((val) => {
-      if (!val || val === '') return true
-      const num = parseInt(val, 10)
-      return num <= 99
-    }, '個数は99以下で入力してください')
-    .transform((val) => {
-      if (!val || val === '') return undefined
-      return parseInt(val, 10)
-    }),
+    .number()
+    .int('個数は整数で入力してください')
+    .min(0, '個数は0以上で入力してください')
+    .max(99, '個数は99以下で入力してください')
+    .optional(),
   note: z
     .string()
     .max(50, '備考は50文字以内で入力してください')
