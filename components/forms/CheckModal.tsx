@@ -91,7 +91,7 @@ export const CheckModal = memo(function CheckModal({
     resolver: zodResolver(checkSchema),
     defaultValues: {
       status: 'YELLOW' as const,
-      quantity: '',
+      quantity: undefined,
       note: ''
     }
   })
@@ -167,7 +167,9 @@ export const CheckModal = memo(function CheckModal({
             <Input
               type="number"
               id="quantity"
-              {...register('quantity')}
+              {...register('quantity', {
+                setValueAs: (value) => value === '' ? undefined : Number(value)
+              })}
               min="0"
               placeholder="個数を入力"
               className="mt-2"
