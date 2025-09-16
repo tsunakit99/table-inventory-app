@@ -77,6 +77,7 @@ const StatusButton = memo(function StatusButton({
 export const CheckModal = memo(function CheckModal({
   isOpen,
   productName,
+  currentStatus,
   onClose,
   onSubmit
 }: CheckModalProps) {
@@ -91,13 +92,22 @@ export const CheckModal = memo(function CheckModal({
     resolver: zodResolver(checkSchema),
     defaultValues: {
       status: 'YELLOW' as const,
-      quantity: '',
+      quantity: undefined,
       note: ''
     }
   })
 
   const onFormSubmit = async (data: CheckFormData) => {
     try {
+      // 緊急→要注意への格下げをチェック
+      if (currentStatus === 'RED' && data.status === 'YELLOW') {
+        setError('status', {
+          type: 'manual',
+          message: '緊急状態から要注意への変更はできません'
+        })
+        return
+      }
+
       await onSubmit({
         status: data.status,
         quantity: data.quantity,
@@ -167,7 +177,9 @@ export const CheckModal = memo(function CheckModal({
             <Input
               type="number"
               id="quantity"
-              {...register('quantity')}
+              {...register('quantity', {
+                setValueAs: (value) => value === '' ? undefined : Number(value)
+              })}
               min="0"
               placeholder="個数を入力"
               className="mt-2"

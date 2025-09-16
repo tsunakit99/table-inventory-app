@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { ActionType } from '@/types/database'
+import { ActionType, CheckStatus } from '@/types/database'
 import { ProductUpdate } from '@/types/products'
 import { CheckSubmitData } from '@/types/inventory'
 import { CheckHistoryInsert } from '@/types/history'
@@ -33,9 +33,26 @@ export async function updateProductCheck(
 
   const validatedData = validation.data
 
+  // 現在の商品情報を取得
+  const { data: currentProduct, error: fetchError } = await supabase
+    .from('products')
+    .select('check_status')
+    .eq('id', productId)
+    .single() as { data: { check_status: CheckStatus } | null, error: Error | null }
+
+  if (fetchError || !currentProduct) {
+    logWarning(fetchError, 'product-fetch-db', 'Product fetch error')
+    throw new Error('商品情報の取得に失敗しました')
+  }
+
+  // 緊急→要注意への格下げをチェック
+  if (currentProduct.check_status === 'RED' && validatedData.status === 'YELLOW') {
+    throw new Error('緊急状態から要注意への変更はできません')
+  }
+
   // 商品のチェックステータスを更新
-  const updateData: ProductUpdate = { 
-    check_status: validatedData.status 
+  const updateData: ProductUpdate = {
+    check_status: validatedData.status
   }
   const { error: updateError } = await supabase
     .from('products')
