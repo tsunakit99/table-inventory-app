@@ -77,6 +77,7 @@ const StatusButton = memo(function StatusButton({
 export const CheckModal = memo(function CheckModal({
   isOpen,
   productName,
+  currentStatus,
   onClose,
   onSubmit
 }: CheckModalProps) {
@@ -98,6 +99,15 @@ export const CheckModal = memo(function CheckModal({
 
   const onFormSubmit = async (data: CheckFormData) => {
     try {
+      // 緊急→要注意への格下げをチェック
+      if (currentStatus === 'RED' && data.status === 'YELLOW') {
+        setError('status', {
+          type: 'manual',
+          message: '緊急状態から要注意への変更はできません'
+        })
+        return
+      }
+
       await onSubmit({
         status: data.status,
         quantity: data.quantity,
