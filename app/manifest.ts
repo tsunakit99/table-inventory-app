@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'たーぶる在庫管理',
     short_name: 'たーぶる在庫管理',
     description: 'たーぶるの在庫管理システム',
-    start_url: '.',
+    start_url: '/auth/login',
     display: 'standalone',
     background_color: '#ffffff',
     theme_color: '#000000',
