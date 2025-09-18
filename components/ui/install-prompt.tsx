@@ -4,11 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { X, Download } from 'lucide-react';
 import { showInstallPrompt, setInstallPrompt, isStandalone } from '@/lib/pwa';
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
+import type { BeforeInstallPromptEvent } from '@/types/pwa';
 
 export function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
