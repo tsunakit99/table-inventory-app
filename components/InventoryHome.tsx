@@ -1,6 +1,8 @@
 'use client'
 
 import { InventoryDataProvider } from '@/components/features/inventory/InventoryDataProvider'
+import { InstallPrompt } from '@/components/ui/install-prompt'
+import { ServiceWorkerRegister } from '@/components/service-worker-register'
 import { Category } from '@/types/categories'
 import { FilteredProductsResult } from '@/types/search'
 import { NotificationSummary } from '@/types/notifications'
@@ -20,11 +22,15 @@ export default function InventoryHome({
   initialCheckHistory
 }: InventoryHomeProps) {
   return (
-    <InventoryDataProvider 
-      initialCategories={initialCategories}
-      initialProducts={initialProducts}
-      initialNotifications={initialNotifications}
-      initialCheckHistory={initialCheckHistory}
-    />
+    <>
+      <ServiceWorkerRegister />
+      <InventoryDataProvider
+        initialCategories={initialCategories}
+        initialProducts={initialProducts}
+        initialNotifications={initialNotifications}
+        initialCheckHistory={initialCheckHistory}
+      />
+      <InstallPrompt />
+    </>
   )
 }
