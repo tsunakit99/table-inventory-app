@@ -16,14 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "たーぶる在庫管理",
   description: "たーぶるの在庫管理システム",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "たーぶる在庫管理",
-  },
-  formatDetection: {
-    telephone: false,
-  },
+  appleWebApp: true,
 };
 
 export default function RootLayout({
@@ -35,7 +28,7 @@ export default function RootLayout({
     <html lang="ja">
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
         <meta name="apple-mobile-web-app-title" content="たーぶる在庫管理" />
         <meta name="apple-touch-fullscreen" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
