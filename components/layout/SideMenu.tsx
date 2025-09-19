@@ -17,14 +17,14 @@ interface SideMenuProps {
   userAvatarUrl?: string | null
 }
 
-export const SideMenu = memo(function SideMenu({ 
-  isOpen, 
-  onClose, 
+export const SideMenu = memo(function SideMenu({
+  isOpen,
+  onClose,
   userName = "ユーザー",
   userAvatarUrl = null
 }: SideMenuProps) {
   const router = useRouter()
-  
+
   const handleBackdropClick = useCallback(() => {
     onClose()
   }, [onClose])
@@ -116,7 +116,7 @@ export const SideMenu = memo(function SideMenu({
               <span className="font-medium text-gray-900">ホーム</span>
             </div>
           </button>
-          
+
           {/* アカウント設定 */}
           <button
             onClick={handleAccountSettings}
