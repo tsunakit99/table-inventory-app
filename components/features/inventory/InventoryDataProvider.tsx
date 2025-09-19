@@ -1,8 +1,13 @@
 'use client'
 
 import { useState, useMemo, useCallback, useTransition } from 'react'
+import dynamic from 'next/dynamic'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
-import { InventoryContent } from './InventoryContent'
+
+// 動的インポートでコード分割
+const InventoryContent = dynamic(() => import('./InventoryContent').then(mod => ({ default: mod.InventoryContent })), {
+  loading: () => <div className="flex items-center justify-center p-8">読み込み中...</div>
+})
 import { FilteredProductsResult } from '@/types/search'
 import { NotificationSummary } from '@/types/notifications'
 import { Category } from '@/types/categories'

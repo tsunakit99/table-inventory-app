@@ -8,10 +8,13 @@ import { CategoryTabs } from '@/components/features/categories/CategoryTabs'
 import { ProductList } from '@/components/features/products/ProductList'
 import { Category } from '@/types/categories'
 import { Product } from '@/types/products'
-import { CheckModal } from '@/components/forms/CheckModal'
-import { AddCategoryModal } from '@/components/features/categories/AddCategoryModal'
-import { AddProductModal } from '@/components/features/products/AddProductModal'
-import { DeleteConfirmModal } from '@/components/forms/DeleteConfirmModal'
+// モーダルコンポーネントを動的インポート（使用時のみ読み込み）
+import dynamic from 'next/dynamic'
+
+const CheckModal = dynamic(() => import('@/components/forms/CheckModal').then(mod => ({ default: mod.CheckModal })))
+const AddCategoryModal = dynamic(() => import('@/components/features/categories/AddCategoryModal').then(mod => ({ default: mod.AddCategoryModal })))
+const AddProductModal = dynamic(() => import('@/components/features/products/AddProductModal').then(mod => ({ default: mod.AddProductModal })))
+const DeleteConfirmModal = dynamic(() => import('@/components/forms/DeleteConfirmModal').then(mod => ({ default: mod.DeleteConfirmModal })))
 import { CheckHistoryItem } from '@/types/history'
 import { updateProductCheck } from '@/actions/inventory'
 import { addCategory, deleteCategory } from '@/actions/categories'

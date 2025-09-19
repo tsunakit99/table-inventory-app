@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import { InventoryDataProvider } from '@/components/features/inventory/InventoryDataProvider'
-import { InstallPrompt } from '@/components/ui/install-prompt'
 import { registerSW } from '@/lib/pwa'
 import { Category } from '@/types/categories'
 import { FilteredProductsResult } from '@/types/search'
@@ -27,14 +26,11 @@ export default function InventoryHome({
   }, [])
 
   return (
-    <>
-      <InventoryDataProvider
-        initialCategories={initialCategories}
-        initialProducts={initialProducts}
-        initialNotifications={initialNotifications}
-        initialCheckHistory={initialCheckHistory}
-      />
-      <InstallPrompt />
-    </>
+    <InventoryDataProvider
+      initialCategories={initialCategories}
+      initialProducts={initialProducts}
+      initialNotifications={initialNotifications}
+      initialCheckHistory={initialCheckHistory}
+    />
   )
 }
