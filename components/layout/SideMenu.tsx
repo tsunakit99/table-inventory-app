@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useCallback } from 'react'
-import { Settings, LogOut, X } from 'lucide-react'
+import { Settings, LogOut, X, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils/tailwind'
@@ -32,6 +32,11 @@ export const SideMenu = memo(function SideMenu({
   const handleMenuClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
   }, [])
+
+  const handleHome = useCallback(() => {
+    router.push('/')
+    onClose()
+  }, [router, onClose])
 
   const handleAccountSettings = useCallback(() => {
     router.push('/user')
@@ -99,6 +104,19 @@ export const SideMenu = memo(function SideMenu({
 
         {/* Menu Items */}
         <div className="py-4">
+          {/* ホーム */}
+          <button
+            onClick={handleHome}
+            className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-100"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-8 h-8">
+                <Home className="h-5 w-5 text-gray-600" />
+              </div>
+              <span className="font-medium text-gray-900">ホーム</span>
+            </div>
+          </button>
+          
           {/* アカウント設定 */}
           <button
             onClick={handleAccountSettings}
