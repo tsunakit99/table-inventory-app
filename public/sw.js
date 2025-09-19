@@ -41,6 +41,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip non-GET requests (POST, PUT, DELETE, etc.) - Cache API only supports GET
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   // Handle navigation requests
   if (event.request.mode === 'navigate') {
     event.respondWith(
@@ -87,7 +92,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Default: network first for API calls
+  // Default: network first for API calls (GET only)
   event.respondWith(
     fetch(event.request)
       .then((response) => {
