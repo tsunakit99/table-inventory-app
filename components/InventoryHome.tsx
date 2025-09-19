@@ -1,7 +1,9 @@
 'use client'
 
+import { useEffect } from 'react'
 import { InventoryDataProvider } from '@/components/features/inventory/InventoryDataProvider'
 import { InstallPrompt } from '@/components/ui/install-prompt'
+import { registerSW } from '@/lib/pwa'
 import { Category } from '@/types/categories'
 import { FilteredProductsResult } from '@/types/search'
 import { NotificationSummary } from '@/types/notifications'
@@ -20,6 +22,10 @@ export default function InventoryHome({
   initialNotifications,
   initialCheckHistory
 }: InventoryHomeProps) {
+  useEffect(() => {
+    registerSW()
+  }, [])
+
   return (
     <>
       <InventoryDataProvider
