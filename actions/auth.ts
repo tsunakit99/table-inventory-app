@@ -64,7 +64,7 @@ export async function signIn(formData: FormData) {
   const validatedData = validation.data
 
   console.log('[AUTH] Calling Supabase signInWithPassword')
-  const { error } = await supabase.auth.signInWithPassword(validatedData)
+  const { data, error } = await supabase.auth.signInWithPassword(validatedData)
 
   if (error) {
     console.log('[AUTH] Supabase error:', error.message)
@@ -72,8 +72,16 @@ export async function signIn(formData: FormData) {
     throw new Error(error.message)
   }
 
-  console.log('[AUTH] Login successful, redirecting')
-  redirect('/')
+  console.log('[AUTH] Login successful, user:', data.user?.email)
+
+  // Ensure session is established before redirect
+  if (data.session) {
+    console.log('[AUTH] Session established, redirecting')
+    redirect('/')
+  } else {
+    console.log('[AUTH] No session, throwing error')
+    throw new Error('認証に失敗しました')
+  }
 }
 
 export async function signOut() {

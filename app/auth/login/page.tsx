@@ -31,6 +31,13 @@ export default function LoginPage() {
       formData.append('password', data.password)
       await signIn(formData)
     } catch (error) {
+      // Next.jsのredirect()はエラーを投げてナビゲーションするため、
+      // NEXT_REDIRECTエラーの場合は正常な処理として扱う
+      if (error && typeof error === 'object' && 'digest' in error &&
+          typeof error.digest === 'string' && error.digest.includes('NEXT_REDIRECT')) {
+        console.log('[LOGIN] Redirect successful')
+        return
+      }
       handleFormError(error, 'login', setError)
     }
   }
