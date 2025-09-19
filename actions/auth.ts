@@ -45,6 +45,7 @@ export async function signUp(formData: FormData) {
 }
 
 export async function signIn(formData: FormData) {
+  console.log('[AUTH] signIn started')
   const supabase = await createClient()
 
   // サーバーサイドバリデーション
@@ -62,13 +63,16 @@ export async function signIn(formData: FormData) {
 
   const validatedData = validation.data
 
+  console.log('[AUTH] Calling Supabase signInWithPassword')
   const { error } = await supabase.auth.signInWithPassword(validatedData)
 
   if (error) {
+    console.log('[AUTH] Supabase error:', error.message)
     logWarning(error, 'login-supabase', 'Supabase login error')
     throw new Error(error.message)
   }
 
+  console.log('[AUTH] Login successful, redirecting')
   redirect('/')
 }
 
