@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useCallback, useState, useTransition } from 'react'
 import { User } from '@supabase/supabase-js'
 import { ArrowLeft, Camera, Edit2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,16 +8,22 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { updateDisplayName, updateAvatar } from '@/actions/users'
 import { uploadAvatar } from '@/actions/storage'
 import { getInitials } from '@/lib/utils/user'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { handleError, showSuccess } from '@/lib/utils/error-handler'
+import Cropper, { type Area, type MediaSize } from 'react-easy-crop'
+import { getCroppedImage } from '@/lib/utils/get-cropped-img'
 
 interface UserProfileProps {
   user: User
 }
+
+const ASPECT_RATIO = 1
+const CROP_WIDTH = 240
 
 export function UserProfile({ user }: UserProfileProps) {
   const router = useRouter()
@@ -28,6 +34,13 @@ export function UserProfile({ user }: UserProfileProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(
     user.user_metadata?.avatar_url || null
   )
+  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false)
+  const [imgSrc, setImgSrc] = useState<string | null>(null)
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null)
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [minZoom, setMinZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
 
   const handleSaveDisplayName = () => {
     startTransition(async () => {
@@ -48,27 +61,116 @@ export function UserProfile({ user }: UserProfileProps) {
     setIsEditingName(false)
   }
 
-  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    if (event.target) {
+      event.target.value = ''
+    }
     if (!file) return
 
+    const reader = new FileReader()
+    reader.addEventListener('load', () => {
+      if (typeof reader.result !== 'string') {
+        handleError(new Error('画像の読み込みに失敗しました'), 'avatar-prepare')
+        return
+      }
+
+      setImgSrc(reader.result)
+      setIsCropDialogOpen(true)
+    })
+    reader.addEventListener('error', () => {
+      handleError(new Error('画像の読み込みに失敗しました'), 'avatar-prepare')
+    })
+    reader.readAsDataURL(file)
+
+    setSelectedFileName(file.name)
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setMinZoom(1)
+    setCroppedAreaPixels(null)
+  }, [])
+
+  const handleCropComplete = useCallback((_: Area, croppedPixels: Area) => {
+    setCroppedAreaPixels(croppedPixels)
+  }, [])
+
+  const onMediaLoaded = useCallback(
+    (mediaSize: MediaSize) => {
+      const { width, height } = mediaSize
+      const mediaAspectRatio = width / height
+
+      if (mediaAspectRatio > ASPECT_RATIO) {
+        const result = CROP_WIDTH / ASPECT_RATIO / height
+        const zoomValue = Math.max(result, 1)
+        setZoom(zoomValue)
+        setMinZoom(zoomValue)
+        return
+      }
+
+      const result = CROP_WIDTH / width
+      const zoomValue = Math.max(result, 1)
+      setZoom(zoomValue)
+      setMinZoom(zoomValue)
+    },
+    []
+  )
+
+  const resetCropState = () => {
+    setIsCropDialogOpen(false)
+    setImgSrc(null)
+    setSelectedFileName(null)
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setMinZoom(1)
+    setCroppedAreaPixels(null)
+  }
+
+  const handleCropConfirm = () => {
+    if (!imgSrc || !croppedAreaPixels) {
+      return
+    }
+
     startTransition(async () => {
+      const previousAvatar = avatarUrl
+      let previewUrl: string | null = null
+
       try {
+        const { blob, previewUrl: generatedPreviewUrl } = await getCroppedImage(
+          imgSrc,
+          croppedAreaPixels
+        )
+        previewUrl = generatedPreviewUrl
+        setAvatarUrl(previewUrl)
+
+        const fileName = selectedFileName?.replace(/\.[^/.]+$/, '') || 'avatar'
+        const croppedFile = new File([blob], `${fileName}.jpeg`, {
+          type: blob.type,
+        })
+
         const formData = new FormData()
-        formData.append('avatar', file)
-        
+        formData.append('avatar', croppedFile)
+
         const publicUrl = await uploadAvatar(formData)
         await updateAvatar(publicUrl)
-        
         setAvatarUrl(publicUrl)
-        showSuccess('アバター画像を更新しました')
         router.refresh()
+        showSuccess('アバター画像を更新しました')
+        resetCropState()
       } catch (error) {
+        setAvatarUrl(previousAvatar)
         handleError(error, 'avatar-upload')
+      } finally {
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl)
+        }
       }
     })
   }
 
+  const handleCropCancel = () => {
+    if (isPending) return
+    resetCropState()
+  }
 
   return (
     <div className="container max-w-2xl mx-auto py-6 px-4">
@@ -102,8 +204,8 @@ export function UserProfile({ user }: UserProfileProps) {
                   </AvatarFallback>
                 </Avatar>
                 <label htmlFor="avatar-upload" className={`absolute -bottom-1 -right-1 bg-primary text-white p-1.5 rounded-full transition-colors ${
-                  isPending 
-                    ? 'cursor-not-allowed opacity-50' 
+                  isPending
+                    ? 'cursor-not-allowed opacity-50'
                     : 'cursor-pointer hover:bg-primary/80'
                 }`}>
                   {isPending ? (
@@ -115,7 +217,7 @@ export function UserProfile({ user }: UserProfileProps) {
                     id="avatar-upload"
                     type="file"
                     accept="image/*"
-                    onChange={handleAvatarUpload}
+                    onChange={handleAvatarSelect}
                     className="hidden"
                     disabled={isPending}
                   />
@@ -203,16 +305,89 @@ export function UserProfile({ user }: UserProfileProps) {
               <p className="mt-1 text-sm">
                 {new Date(user.created_at).toLocaleDateString('ja-JP', {
                   year: 'numeric',
-                  month: 'long', 
+                  month: 'long',
                   day: 'numeric',
                   hour: '2-digit',
-                  minute: '2-digit'
+                  minute: '2-digit',
                 })}
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <Dialog
+        open={isCropDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCropCancel()
+          }
+        }}
+      >
+        <DialogContent showCloseButton={!isPending}>
+          <DialogHeader>
+            <DialogTitle>画像を調整</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative h-64 w-full overflow-hidden rounded-lg bg-muted">
+              {imgSrc && (
+                <Cropper
+                  image={imgSrc}
+                  crop={crop}
+                  zoom={zoom}
+                  minZoom={minZoom}
+                  maxZoom={minZoom + 3}
+                  aspect={ASPECT_RATIO}
+                  cropShape="round"
+                  showGrid={false}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={handleCropComplete}
+                  cropSize={{
+                    width: CROP_WIDTH,
+                    height: CROP_WIDTH / ASPECT_RATIO,
+                  }}
+                  classes={{
+                    containerClassName: 'avatar-crop-container',
+                    cropAreaClassName: 'avatar-crop-area',
+                    mediaClassName: 'avatar-crop-media',
+                  }}
+                  onMediaLoaded={onMediaLoaded}
+                />
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="avatar-zoom">ズーム</Label>
+              <input
+                id="avatar-zoom"
+                type="range"
+                min={minZoom}
+                max={minZoom + 3}
+                step={0.1}
+                value={zoom}
+                onChange={(event) => setZoom(Number(event.target.value))}
+                className="w-full"
+                disabled={isPending}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCropCancel} disabled={isPending}>
+              キャンセル
+            </Button>
+            <Button onClick={handleCropConfirm} disabled={isPending || !croppedAreaPixels}>
+              {isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  保存中...
+                </>
+              ) : (
+                '保存'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
